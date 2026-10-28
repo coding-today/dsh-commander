@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build / pack output
+*.tgz
+dist/
+
+# local artifacts
+*.bak
+*.bak-*
+*.log
+.DS_Store
+
+# editor / os
+.idea/
+.vscode/
+*.swp
+
+# secrets (never commit)
+.env
+.env.*
+!.env.example

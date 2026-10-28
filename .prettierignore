@@ -1,0 +1,6 @@
+node_modules
+assets/commander.md
+README.md
+CHANGELOG.md
+RELEASE-CHECKLIST.md
+pnpm-lock.yaml

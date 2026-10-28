@@ -1,0 +1,31 @@
+# Commander discipline layer for the dsh `web` profile.
+#
+# `dsh plugin --profile web add <this directory>` registers the `dsh.bundle`
+# manifest below, so every `dsh web` boot applies this patch without an extra
+# command-line option.
+#
+# What it installs:
+#   - skill `commander`     : the full playbook (roster / scoring / workflow /
+#                             field notes) registered at runtime, shipped with
+#                             the plugin version instead of a loose user file.
+#   - prompt section        : the standing charter, injected into the system
+#                             prompt so a session that never loads the skill
+#                             still dispatches and verifies the same way.
+#   - tools                 : commander_dispatch_check / commander_expert /
+#                             commander_scoreboard / commander_ledger.
+#
+# Everything is opt-out through `config`; the defaults are the whole product.
+
+- insert:
+      - id: dsh-commander
+        name: 'dsh-commander'
+        config:
+            skillName: commander
+            registerSkill: true
+            # skillDescription: <技能目录里的一句话简介，默认已内置>
+            promptSection: true
+            promptOrder: 118
+            tools: true
+            plansDir: .agent/plans
+            ledgerFile: commander-ledger.md
+            maxConcurrency: 8

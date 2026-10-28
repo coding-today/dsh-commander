@@ -1,0 +1,31 @@
+name: Feature request
+description: A new tool, a new expert, or a rule this plugin should enforce.
+labels: [enhancement]
+body:
+    - type: textarea
+      id: problem
+      attributes:
+          label: 现在的失效现场
+          description: 哪个环节靠提示词堵不住？给出真实发生过的例子。
+      validations:
+          required: true
+    - type: textarea
+      id: proposal
+      attributes:
+          label: 你希望插件怎么做
+          description: 能机械判定的判据（阻断 / 告警 / 落盘），不要写「做得更好」
+      validations:
+          required: true
+    - type: dropdown
+      id: surface
+      attributes:
+          label: 落在哪个面
+          options:
+              - 派发闸门（commander_dispatch_check）
+              - 专家名册（commander_expert / lib/experts.js）
+              - 记分牌（commander_scoreboard）
+              - 经验台账（commander_ledger）
+              - 常驻纪律段（charter）
+              - 安装 / 兼容性
+      validations:
+          required: true

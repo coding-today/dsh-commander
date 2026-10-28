@@ -1,0 +1,38 @@
+name: Bug report
+description: Something is broken or behaves differently than documented.
+labels: [bug]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              请先确认：`pnpm test` 全绿、`dsh plugin --profile web list` 能看到本插件、重启过 DSH。
+              三个工具与本插件相关的报错，请贴**完整**报错文本（含 `dsh-commander:` 前缀）。
+    - type: input
+      id: versions
+      attributes:
+          label: Versions
+          description: DSH 版本、Node 版本、插件版本（`dsh --version` / `node -v` / 插件 `package.json`）
+          placeholder: 'dsh 0.2.1-rc.2, node v22.22.3, dsh-commander 0.1.0-rc.1'
+      validations:
+          required: true
+    - type: textarea
+      id: what
+      attributes:
+          label: What happened
+          description: 你做了什么、期望什么、实际发生了什么
+      validations:
+          required: true
+    - type: textarea
+      id: evidence
+      attributes:
+          label: Evidence
+          description: 启动日志（`DSH_COMMANDER_TRACE=1`）、工具返回、`git status`、相关文件路径
+          render: text
+      validations:
+          required: true
+    - type: textarea
+      id: repro
+      attributes:
+          label: Reproduction
+          description: 最小复现步骤；如涉及写盘，说明会话权限（只读 / 工作区写 / 完全权限）
+          render: text
