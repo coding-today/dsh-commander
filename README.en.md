@@ -7,7 +7,7 @@
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#compatibility)
 [![DSH tested on 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#compatibility)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-68%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-71%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -265,7 +265,7 @@ dsh-commander/
 │   └── workspace.js    # path allow-list + host fs read/write
 ├── assets/commander.md # playbook skill (roster appendix is generated)
 ├── scripts/            # roster renderer, example regen, CLI, screenshots, one-command check
-├── test/               # 68 cases (node --test)
+├── test/               # 71 cases (node --test)
 ├── examples/           # runnable batches with real gate output
 ├── docs/screenshots/   # README images and their real source transcripts
 ├── .github/            # CI, issue and PR templates

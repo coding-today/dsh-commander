@@ -9,14 +9,14 @@
 
 | 项 | 证据 |
 | --- | --- |
-| 单元与集成测试 | `node --test test/*.test.mjs` → **68/68 通过** |
+| 单元与集成测试 | `node --test test/*.test.mjs` → **71/71 通过** |
 | 静态检查 | `npx eslint .` → 0 问题；`npx prettier --check .` → `All matched files use Prettier code style!` |
 | 名册与技能附录同步 | `node scripts/render-roster.mjs --check` → `roster appendix is up to date` |
 | 一条命令跑全 | `pnpm run check`（lint + format:check + roster:check + test） |
 | 真机挂载 | `DSH_COMMANDER_TRACE=1 dsh --profile web --port 8100 --no-open` → `skill "commander" registered (83751 chars)` / `tools registered: 四工具` / `mounted (skill=true charter=true tools=true)` |
 | 与宿主无关的激活失败 | `did not activate` 仅 2 条：`web-ui-task-board`（ledger 被另一进程占用）、`experimental-inspector`（fetch accessor），与本插件无关 |
 | profile 侧可解析 | `cd ~/.dsh/profiles/web && node -e "import('dsh-commander')"` → 导出 `Config/apply/inject/name` |
-| 打包内容 | `npm pack --dry-run` → **31 files / 500.6 kB packed / 705.4 kB unpacked**（含 README 截图） |
+| 打包内容 | `npm pack --dry-run` → **32 files / 502.1 kB packed / 710.0 kB unpacked**（含 README 截图） |
 | 依赖可从公网安装 | `@deepseek-ai/dsh-tools@0.2.1-rc.2` 与 `@deepseek-ai/schemastery@3.18.5` 在 npmjs 与 npmmirror 均可解析（CI 不会因私有包失败） |
 | Git 历史 | `main` 分支，`git log --oneline` 见提交清单；工作树干净 |
 

@@ -7,7 +7,7 @@
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#兼容性)
 [![DSH through 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#兼容性)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-68%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-71%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -260,7 +260,7 @@ dsh-commander/
 │   └── workspace.js    # 路径白名单 + 走宿主 fs 的读写
 ├── assets/commander.md # 技能正文（末尾名册附录是生成物）
 ├── scripts/            # 名册生成、示例重生成、CLI、截图渲染、一条命令检查
-├── test/               # 68 个用例（node --test）
+├── test/               # 71 个用例（node --test）
 ├── examples/           # 可运行的批次与真实闸门输出
 ├── docs/screenshots/   # README 截图与其真实输出源文本
 ├── .github/            # CI、issue / PR 模板
