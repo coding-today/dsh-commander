@@ -159,6 +159,25 @@ node scripts/commander-cli.mjs experts quality
 把「有效做法 / 踩坑教训 / 固化规则」追加到 `.agent/plans/commander-ledger.md`，最新在最上；
 超过 256 KiB 自动归档为 `commander-ledger-YYYYMM.md`。
 
+## 侧边栏：专家进展实时面板
+
+插件在 Web 端注册一个右侧栏标签「专家」，每 3 秒读一次本机团队状态，把**每位专家正在干什么**摊开：
+
+- 绿点 = 在跑（团队记录为 `working`，或手上压着 `claimed` / `in_progress` 的活）；
+  灰点 = 空闲；红点 = 已移除。找不到活的专家不会被画成「忙」。
+- 每人一行：名字、角色、当前任务（任务号 + 标题 + 状态 + 多久没动）、收件箱最后一条消息。
+- 团队头：在跑人数 / 总人数、待办数、完成数、失败数；`halted` 的团队直接标「已暂停」。
+
+数据来自宿主团队插件写在 `<workspace>/.agent-teams/` 的状态，插件只读不驱动：
+
+```bash
+curl -s http://127.0.0.1:<port>/ext/commander/state | jq .totals
+# { "workspaces": 1, "teams": 1, "members": 3, "working": 2 }
+```
+
+`monitor: false` 可以整块关掉（不注册路由，也不加载面板）。面板只显示宿主的团队记录：
+**它不会伪造进度**——专家真的不动，你看到的就是越来越旧的时间戳。
+
 ## 专家名册（19 位）
 
 | 领域 | 专家 |

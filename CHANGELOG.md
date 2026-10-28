@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- **侧边栏「专家」面板**：`GET /ext/commander/state` 只读快照 + Web 客户端 tab，
+  每 3 秒展示每位专家的状态、当前任务、最近一条消息；`monitor: false` 可关闭。
+- 服务端 `lib/monitor.js`：解析 `<workspace>/.agent-teams/*/team.json` 与 `inbox/*.jsonl`，
+  成员判活优先看团队记录，其次看是否压着未完成任务；坏 JSONL 行跳过而不是整块失败。
+
 首个可运行版本已就绪，尚未发布到 npm。发布前需要处理的事项见
 [RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址、依赖双份取舍）。
 

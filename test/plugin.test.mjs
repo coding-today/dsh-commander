@@ -52,6 +52,10 @@ function makeCtx(root) {
 		effect(factory) {
 			return factory();
 		},
+		/** Optional-service scope: applied only when every named service exists. */
+		inject(names, apply) {
+			if (names.every((name) => ctx.get(name) !== undefined)) apply(ctx);
+		},
 		tools: {
 			/** Stand-in registry: the plugin looks relay tools up by name. */
 			get(toolName) {
@@ -520,6 +524,108 @@ test('commander_handoff deliver needs a target', async () => {
 			),
 			/toMember/
 		);
+	} finally {
+		cleanup();
+	}
+});
+
+/** Minimal ServerResponse stand-in that records what the route wrote. */
+function makeResponse() {
+	const record = { status: 0, headers: {}, body: '' };
+	return {
+		get status() {
+			return record.status;
+		},
+		get headers() {
+			return record.headers;
+		},
+		get body() {
+			return record.body;
+		},
+		writeHead(status, headers) {
+			record.status = status;
+			record.headers = headers ?? {};
+			return this;
+		},
+		end(chunk) {
+			if (typeof chunk === 'string') record.body += chunk;
+		}
+	};
+}
+
+test('monitor route serves the team snapshot and refuses writes', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		mkdirSync(path.join(root, '.agent-teams', 'team-1', 'inbox'), { recursive: true });
+		writeFileSync(
+			path.join(root, '.agent-teams', 'team-1', 'team.json'),
+			JSON.stringify({
+				name: '支付重构',
+				id: 'team-1',
+				captainSessionId: 's-captain',
+				createdAt: 1_700_000_000_000,
+				members: [{ id: 's-builder', name: 'builder', role: '实现', status: 'working', joinedAt: 1 }],
+				tasks: [
+					{
+						id: 't1',
+						subject: '重写退款状态机',
+						status: 'in_progress',
+						assignee: 'builder',
+						dependencies: [],
+						createdAt: 1,
+						updatedAt: 2
+					}
+				]
+			}),
+			'utf8'
+		);
+		const { ctx } = makeCtx(root);
+		const routes = [];
+		ctx.inject = (names, apply) => {
+			assert.deepEqual(names, ['webServer', 'workspaceRegistry']);
+			apply({
+				workspaceRegistry: { list: () => [{ path: root, title: '演示工作区' }] },
+				webServer: {
+					register(route) {
+						routes.push(route);
+						return () => {};
+					}
+				},
+				effect: (fn) => fn()
+			});
+		};
+		plugin.apply(ctx, {});
+		assert.equal(routes.length, 1);
+		assert.equal(routes[0].path, '/ext/commander/state');
+
+		const response = makeResponse();
+		await routes[0].handler({ method: 'GET' }, response);
+		assert.equal(response.status, 200);
+		assert.equal(response.headers['cache-control'], 'no-store');
+		const snapshot = JSON.parse(response.body);
+		assert.equal(snapshot.totals.workspaces, 1);
+		assert.equal(snapshot.workspaces[0].teams.length, 1);
+		assert.equal(snapshot.workspaces[0].teams[0].members[0].name, 'builder');
+		assert.equal(snapshot.workspaces[0].teams[0].members[0].status, 'working');
+
+		const denied = makeResponse();
+		await routes[0].handler({ method: 'POST' }, denied);
+		assert.equal(denied.status, 405);
+	} finally {
+		cleanup();
+	}
+});
+
+test('monitor can be switched off', () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx } = makeCtx(root);
+		let touched = false;
+		ctx.inject = () => {
+			touched = true;
+		};
+		plugin.apply(ctx, { monitor: false });
+		assert.equal(touched, false);
 	} finally {
 		cleanup();
 	}

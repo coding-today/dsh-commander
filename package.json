@@ -17,11 +17,20 @@
     "./package.json": "./package.json",
     "./experts": "./lib/experts.js",
     "./ledger": "./lib/ledger.js",
-    "./workspace": "./lib/workspace.js"
+    "./workspace": "./lib/workspace.js",
+    "./client": "./lib/client.js"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
+      ]
     }
   },
   "files": [

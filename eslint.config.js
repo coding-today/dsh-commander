@@ -27,5 +27,21 @@ export default [
 			'object-shorthand': ['warn', 'always'],
 			'no-else-return': 'warn'
 		}
+	},
+	{
+		// The web bundle is a classic script: it registers a factory with the
+		// host's module loader and runs in the browser, not in Node.
+		files: ['lib/client.js'],
+		languageOptions: {
+			globals: {
+				window: 'readonly',
+				document: 'readonly',
+				fetch: 'readonly',
+				setInterval: 'readonly',
+				clearInterval: 'readonly',
+				setTimeout: 'readonly',
+				clearTimeout: 'readonly'
+			}
+		}
 	}
 ];

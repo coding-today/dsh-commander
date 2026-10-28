@@ -159,6 +159,27 @@ the running total is not clamped.
 Appends "what worked / what bit / rule to keep" to `.agent/plans/commander-ledger.md`, newest on top;
 rotates to `commander-ledger-YYYYMM.md` past 256 KiB.
 
+## Sidebar: live expert progress
+
+The plugin registers a right-sidebar tab ("专家") that polls the local team state every 3 seconds and shows
+**what each expert is doing**:
+
+- Green dot = working (the team record says `working`, or the member holds a `claimed` / `in_progress` task);
+  grey = idle; red = removed. A member with no task is never drawn as "busy".
+- One row per member: name, role, current task (id + subject + status + how long it has been idle), and the last
+  message in that member's mailbox.
+- Team header: working/total, pending, completed, failed; a `halted` team is flagged as paused.
+
+The data is the host team plugin's own state under `<workspace>/.agent-teams/`; this plugin only reads it:
+
+```bash
+curl -s http://127.0.0.1:<port>/ext/commander/state | jq .totals
+# { "workspaces": 1, "teams": 1, "members": 3, "working": 2 }
+```
+
+Set `monitor: false` to drop the route and the panel. The panel shows the host's records only — it never
+invents progress: if an expert stalls, you see a stale timestamp, not a spinner.
+
 ## Expert roster (19)
 
 | Division     | Experts                                                                               |
