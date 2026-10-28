@@ -6,6 +6,9 @@ node_modules/
 *.tgz
 dist/
 
+# 插件运行产生的台账与记分牌（跑一次示例就会生成）
+.agent/
+
 # local artifacts
 *.bak
 *.bak-*

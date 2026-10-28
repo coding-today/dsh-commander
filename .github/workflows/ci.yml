@@ -14,9 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 版本由 package.json 的 packageManager 字段决定，避免两处漂移
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
@@ -27,6 +26,7 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run format:check
       - run: pnpm run roster:check
+      - run: pnpm run examples:check
       - run: pnpm test
       # prepack 会再跑一遍 check，这里只要清单，不重复跑测试
       - run: npm pack --dry-run --ignore-scripts

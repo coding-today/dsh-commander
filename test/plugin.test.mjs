@@ -159,24 +159,51 @@ test('dispatch tool honours a custom maxConcurrency default', async () => {
 	}
 });
 
-test('dispatch tool does not treat a 1-based dependency as a self-review', async () => {
+test('dispatch tool catches a same-assignee self-review but not a cross-expert one', async () => {
 	const { root, cleanup } = withRoot();
 	try {
 		const { ctx, tools } = makeCtx(root);
 		plugin.apply(ctx, {});
-		const tasks = [
-			{ subject: '实现', assignee: 'fe', acceptance: 'pytest 全绿', files: ['src/a.ts'] },
+		const gate = tools.get('commander_dispatch_check');
+		const base = { subject: '实现', assignee: 'fe', acceptance: 'pytest 全绿', files: ['src/a.ts'] };
+
+		// 同一位专家既实现又审查，且 dependsOn 自指 -> 必须报 D4
+		const selfReview = await gate.execute(
 			{
-				subject: '审查',
-				assignee: 'rev',
-				role: 'review',
-				acceptance: '逐条意见',
-				dependsOn: [1],
-				files: ['src/a.ts']
-			}
-		];
-		const value = await tools.get('commander_dispatch_check').execute({ tasks }, makeExec(root));
-		assert.doesNotMatch(value.text, /D4_self_review/);
+				tasks: [
+					base,
+					{
+						subject: '审查',
+						assignee: 'fe',
+						role: 'review',
+						acceptance: '逐条意见',
+						dependsOn: [1],
+						files: ['src/a.ts']
+					}
+				]
+			},
+			makeExec(root)
+		);
+		assert.match(selfReview.text, /D4_self_review/, '同人自审必须被拦下');
+
+		// 换成另一位专家审查同一条上游 -> 不该报 D4
+		const crossReview = await gate.execute(
+			{
+				tasks: [
+					base,
+					{
+						subject: '审查',
+						assignee: 'rev',
+						role: 'review',
+						acceptance: '逐条意见',
+						dependsOn: [1],
+						files: ['src/a.ts']
+					}
+				]
+			},
+			makeExec(root)
+		);
+		assert.doesNotMatch(crossReview.text, /D4_self_review/, '换人审查不应误判');
 	} finally {
 		cleanup();
 	}

@@ -85,3 +85,21 @@ test('the skill appendix is in sync with the catalog', () => {
 	assert.ok(SKILL_BODY.includes('<!-- dsh-commander:roster:start -->'));
 	assert.ok(SKILL_BODY.includes('commander_expert brief'));
 });
+
+test('brief renders exactly the seven requirement sections, in order', () => {
+	const expected = [
+		'### 何时召唤',
+		'### 派发时必须给到',
+		'### 必须交回',
+		'### 验收判据（可机械判定）',
+		'### 禁止动作',
+		'### 扣分项',
+		'### 交接'
+	];
+	for (const expert of EXPERT_CATALOG) {
+		const headings = formatExpertBrief(expert)
+			.split('\n')
+			.filter((line) => line.startsWith('### '));
+		assert.deepEqual(headings, expected, `${expert.slug} 的要求书章节不一致`);
+	}
+});

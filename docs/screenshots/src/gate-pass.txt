@@ -1,0 +1,4 @@
+$ node scripts/commander-cli.mjs gate examples/dispatch-batch.json
+派发闸门：通过（无阻断项）
+任务 2 条 · 在跑 0 / 上限 8
+exit=0

@@ -1,85 +1,86 @@
 {
-  "name": "dsh-commander",
-  "version": "0.1.0-rc.1",
-  "description": "Turn the commander playbook into enforced mechanics inside DeepSeek Harness: a 19-expert roster where each expert carries its own acceptance criteria, a standing discipline prompt that loads in every session, and four tools (dispatch gate, expert lookup, scoreboard, lesson ledger) that refuse vague handoffs and keep traces on disk.",
-  "engines": {
-    "node": ">=22.19.0",
-    "dsh": ">=0.2.1-rc.2"
-  },
-  "type": "module",
-  "main": "lib/index.js",
-  "exports": {
-    ".": "./lib/index.js",
-    "./scoreboard": "./lib/scoreboard.js",
-    "./dispatch": "./lib/dispatch.js",
-    "./charter": "./lib/charter.js",
-    "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json",
-    "./experts": "./lib/experts.js",
-    "./ledger": "./lib/ledger.js",
-    "./workspace": "./lib/workspace.js"
-  },
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    }
-  },
-  "files": [
-    "lib",
-    "assets",
-    "examples",
-    "cordis.patch.yml",
-    "README.md",
-    "CHANGELOG.md",
-    "CONTRIBUTING.md",
-    "SECURITY.md",
-    "CODE_OF_CONDUCT.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "roster": "node scripts/render-roster.mjs",
-    "roster:check": "node scripts/render-roster.mjs --check",
-    "check": "pnpm run lint && pnpm run format:check && pnpm run roster:check && pnpm test",
-    "prepack": "pnpm run check"
-  },
-  "dependencies": {
-    "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
-    "@deepseek-ai/schemastery": "3.18.5"
-  },
-  "peerDependencies": {
-    "@deepseek-ai/dsh-tools": "^0.2.1-rc.2"
-  },
-  "keywords": [
-    "dsh",
-    "dsh-plugin",
-    "deepseek-harness",
-    "commander",
-    "agent-teams",
-    "multi-agent",
-    "orchestration"
-  ],
-  "license": "MIT",
-  "author": "Yuxiang Lin",
-  "publishConfig": {
-    "access": "public",
-    "tag": "next"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.13.0",
-    "prettier": "^3.9.10"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/coding-today/dsh-commander.git"
-  },
-  "homepage": "https://github.com/coding-today/dsh-commander#readme",
-  "bugs": {
-    "url": "https://github.com/coding-today/dsh-commander/issues"
-  },
-  "packageManager": "pnpm@9.15.0"
+    "name": "dsh-commander",
+    "version": "0.1.0-rc.1",
+    "description": "把「指挥官」多专家协同方法论做成 DSH 插件：常驻纪律段、19 位专家的派遣要求、派发闸门与落盘记分牌/台账",
+    "engines": {
+        "node": ">=22.19.0",
+        "dsh": ">=0.2.1-rc.2"
+    },
+    "type": "module",
+    "main": "lib/index.js",
+    "exports": {
+        ".": "./lib/index.js",
+        "./scoreboard": "./lib/scoreboard.js",
+        "./dispatch": "./lib/dispatch.js",
+        "./charter": "./lib/charter.js",
+        "./cordis.patch.yml": "./cordis.patch.yml",
+        "./package.json": "./package.json",
+        "./experts": "./lib/experts.js",
+        "./ledger": "./lib/ledger.js",
+        "./workspace": "./lib/workspace.js"
+    },
+    "dsh": {
+        "bundle": {
+            "patch": "./cordis.patch.yml"
+        }
+    },
+    "files": [
+        "lib",
+        "assets",
+        "examples",
+        "docs/screenshots",
+        "cordis.patch.yml",
+        "README.md",
+        "README.en.md",
+        "CHANGELOG.md",
+        "SECURITY.md",
+        "CODE_OF_CONDUCT.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "roster": "node scripts/render-roster.mjs",
+        "roster:check": "node scripts/render-roster.mjs --check",
+        "examples": "node scripts/regen-examples.mjs",
+        "examples:check": "node scripts/regen-examples.mjs --check",
+        "screenshots": "python3 scripts/render-screenshots.py",
+        "test": "node --test test/*.test.mjs",
+        "check": "node scripts/check.mjs",
+        "prepack": "node scripts/check.mjs"
+    },
+    "dependencies": {
+        "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+        "@deepseek-ai/schemastery": "3.18.5"
+    },
+    "keywords": [
+        "dsh",
+        "dsh-plugin",
+        "deepseek-harness",
+        "commander",
+        "agent-teams",
+        "multi-agent",
+        "orchestration"
+    ],
+    "license": "MIT",
+    "author": "Yuxiang Lin",
+    "publishConfig": {
+        "access": "public",
+        "tag": "next"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.13.0",
+        "prettier": "^3.9.10"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/coding-today/dsh-commander.git"
+    },
+    "homepage": "https://github.com/coding-today/dsh-commander#readme",
+    "bugs": {
+        "url": "https://github.com/coding-today/dsh-commander/issues"
+    },
+    "packageManager": "pnpm@9.15.0"
 }

@@ -1,0 +1,13 @@
+$ node scripts/commander-cli.mjs gate examples/dispatch-batch-blocked.json
+派发闸门：未通过（3 项阻断）
+任务 2 条 · 在跑 0 / 上限 8
+
+阻断：
+- [D2_no_acceptance] 改退款逻辑：没有验收标准，交付物无法判定完成。 → 写出可机械验证的验收标准（命令 + 期望输出，或文件清单）。
+- [D1_no_assignee] 让某位专家看看这个 PR：没有指定执行者，任务落共享池等于没人认领。 → 写明 assignee（专家名/teammate target）。
+- [D3_review_without_upstream] 让某位专家看看这个 PR：审查任务没有上游，审查者拿不到被审对象。 → 用 dependsOn 指明被审任务的序号或标题。
+
+提醒：
+- [W1_no_files] 改退款逻辑：实现任务没有声明影响面文件。 → 写 files（受影响文件或目录），便于做写者冲突检查。
+- [W3_no_dependencies] (整批)：整批任务没有任何依赖声明，可能把本应串行的工作并行掉了。 → 确认每条任务的上下游；审查/验收类任务必须依赖实现任务。
+exit=1

@@ -24,6 +24,7 @@
 
 ## 处理
 
-维护者可对违规内容做删除、编辑、拒绝合并，或临时/永久禁止参与。举报请走 GitHub 私有渠道（Security 页或维护者邮箱），我们会尽快回复并保护举报者隐私。
+维护者可对违规内容做删除、编辑、拒绝合并，或临时/永久禁止参与。举报请走 GitHub 私有渠道：仓库 → Security → Report a vulnerability（同 https://github.com/coding-today/dsh-commander/security/advisories/new ），
+我们会尽快回复并保护举报者隐私。
 
 本准则改编自 [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/)，按 CC BY 4.0 使用。

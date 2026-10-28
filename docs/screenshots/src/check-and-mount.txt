@@ -1,0 +1,14 @@
+$ pnpm run check
+> eslint .
+> prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+roster appendix is up to date
+# tests 43
+# pass 43
+# fail 0
+
+$ DSH_COMMANDER_TRACE=1 dsh --profile web --no-open
+[dsh-commander] skill "commander" registered (83751 chars) from …/assets/commander.md
+[dsh-commander] tools registered: commander_dispatch_check / commander_scoreboard / commander_ledger / commander_expert
+[dsh-commander] mounted (skill=true charter=true tools=true)

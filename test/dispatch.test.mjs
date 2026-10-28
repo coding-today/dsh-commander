@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { checkDispatch, DEFAULT_MAX_CONCURRENCY, formatDispatchReport } from '../lib/dispatch.js';
+import { expertSlugs } from '../lib/experts.js';
 
 const good = [
 	{
@@ -146,4 +148,22 @@ test('report lists blocking items with their fix', () => {
 	const report = formatDispatchReport(result);
 	assert.match(report, /D2_no_acceptance/);
 	assert.match(report, /→/);
+});
+
+test('examples/gate-output*.txt match the current gate implementation', () => {
+	const pairs = [
+		['../examples/dispatch-batch.json', '../examples/gate-output.txt'],
+		['../examples/dispatch-batch-blocked.json', '../examples/gate-output-blocked.txt']
+	];
+	for (const [input, expected] of pairs) {
+		const payload = JSON.parse(readFileSync(new URL(input, import.meta.url), 'utf8'));
+		const result = checkDispatch(payload.tasks ?? [], {
+			running: payload.running ?? 0,
+			maxConcurrency: payload.maxConcurrency,
+			knownExperts: expertSlugs()
+		});
+		const actual = `${formatDispatchReport(result).trim()}\n`;
+		const want = readFileSync(new URL(expected, import.meta.url), 'utf8');
+		assert.equal(actual, want, `${expected} 与实现输出不一致，跑 node scripts/regen-examples.mjs`);
+	}
 });

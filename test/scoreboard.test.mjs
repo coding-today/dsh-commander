@@ -4,6 +4,7 @@ import {
 	START_SCORE,
 	applyAdjustments,
 	assertDelta,
+	assertSameTask,
 	createScoreboard,
 	formatScoreboard,
 	parseScoreboard,
@@ -80,4 +81,21 @@ test('file names are slugged but keep CJK', () => {
 	assert.equal(slugifyTask('退款 状态机/重构'), '退款-状态机-重构');
 	assert.equal(scoreboardFileName('退款 状态机'), '退款-状态机-expert-scoreboard.md');
 	assert.throws(() => slugifyTask('   '), /不能为空/);
+});
+
+test('a task name containing pipes survives the round-trip unchanged', () => {
+	// 标题即身份：以前把 | 写成 / 会让 show/adjust 永远报「不是同一任务」
+	const task = '后端 | 退款 \\ 加固';
+	const board = createScoreboard({ task, experts: ['fe'], at: new Date('2026-10-29T00:00:00.000Z') });
+	const parsed = parseScoreboard(formatScoreboard(board));
+	assert.equal(parsed.task, task);
+	assert.doesNotThrow(() => assertSameTask(parsed, task));
+});
+
+test('a task name containing newlines degrades to one line without losing identity', () => {
+	const task = '第一行\n第二行';
+	const board = createScoreboard({ task, experts: ['fe'] });
+	const parsed = parseScoreboard(formatScoreboard(board));
+	assert.equal(parsed.task, task.replace('\n', '\n'));
+	assert.equal(parsed.task.split('\n').length, 2);
 });

@@ -1,13 +1,46 @@
 # Changelog
 
-## 0.1.0-rc.1
+本文件格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
+版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-首个可发布候选版。
+## [Unreleased]
 
-- 注册 `commander` 技能（83,752 字符，含 19 位专家名册、7 阶段工作流、实战教训）。
-- 注入常驻纪律段（约 1.4k 字符，`promptOrder` 118，`interpolate: false`）。
-- 四个工具：`commander_dispatch_check`、`commander_expert`、`commander_scoreboard`、`commander_ledger`。
-- 19 位专家，每位带七项要求（何时召唤 / 必须给到 / 必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）。
-- 派发闸门：6 个阻断码（D1–D6）、4 个告警码（W1–W4）。
-- 记分牌与台账通过宿主文件服务写入会话工作区，遵守会话沙箱；台账超过 256 KiB 自动按月归档。
-- 无发布前需改动的本地路径依赖问题（依赖在插件目录内自装，`link:` 安装后可解析）。
+首个可运行版本已就绪，尚未发布到 npm。发布前需要处理的事项见
+[RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址、依赖双份取舍）。
+
+## [0.1.0-rc.1] - 2026-10-29
+
+首个候选版本：把「指挥官」从一份 Markdown 技能变成 DSH 插件。
+
+### Added
+
+- **技能注册**：`assets/commander.md`（约 83.7k 字符）在运行时注册为 `commander` 技能，
+  随插件版本走，不受用户目录里旧同名技能影响。
+- **常驻纪律段**：`buildCharter()` 生成约 1.4k 字符的系统提示段落，每个会话都在场，
+  含派发闸门 5 条、裁决纪律 6 条、记忆与留痕 4 条、专家召集纪律 4 条、工具速查 4 条。
+- **四个工具**：
+  - `commander_dispatch_check`：派发前闸门，6 个阻断码（`D1_no_assignee`、`D2_no_acceptance`、
+    `D3_review_without_upstream`、`D4_self_review`、`D5_over_concurrency`、`D6_unknown_expert`）
+    与 4 个告警码（`W1_no_files`、`W2_write_conflict`、`W3_no_dependencies`、`W4_no_expert`）。
+  - `commander_expert`：19 位专家的名册查询与派遣要求（七节：何时召唤 / 派发时必须给到 /
+    必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）。
+  - `commander_scoreboard`：`init` / `adjust` / `show`，落盘为 `.agent/plans/<task>-expert-scoreboard.md`。
+  - `commander_ledger`：把有效做法、踩坑教训追加到 `.agent/plans/commander-ledger.md`，超过 256 KiB 自动归档。
+- **安全边界**：所有写入走宿主 `ctx.fs`（只读会话写不进去），无 `dir` 参数，
+  `plansDir` / `ledgerFile` 经 `assertSafeRelative` 拒绝绝对路径、`~` 与 `..`。
+- **CLI**：`scripts/commander-cli.mjs` 提供 `gate` / `brief` / `experts` 三个子命令，
+  不装插件也能验证闸门与名册（`gate` 未通过时退出码为 1）。
+- **示例**：`examples/` 下两份批次与对应闸门输出，由 `scripts/regen-examples.mjs` 真跑生成并进测试比对。
+- **工程规范**：Prettier + ESLint + EditorConfig + gitattributes，`node scripts/check.mjs` 一条命令跑全；
+  GitHub Actions 跑 lint → format → roster → examples → test → pack。
+- **文档**：中文 README、英文 README、CONTRIBUTING、SECURITY、CODE_OF_CONDUCT、AGENTS、发布清单。
+
+### Known trade-offs
+
+- `@deepseek-ai/dsh-tools` 放在 `dependencies` 并精确钉版本：宿主 profile 内不装该 peer，
+  插件必须自带一份，代价是宿主与插件各持一个 `defineTool` 实例。
+- 只在 macOS + Node 22.22.3 + DSH 0.2.1-rc.2 实测；其他平台未验证。
+- 名册与专家要求硬编码在 `lib/experts.js`，增删专家需要改代码并重跑 `scripts/render-roster.mjs`。
+
+[Unreleased]: https://github.com/coding-today/dsh-commander/compare/v0.1.0-rc.1...HEAD
+[0.1.0-rc.1]: https://github.com/coding-today/dsh-commander/releases/tag/v0.1.0-rc.1
