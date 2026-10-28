@@ -35,6 +35,7 @@ function makeFs(root) {
 /** Minimal Cordis context stub that records every contribution. */
 function makeCtx(root) {
 	const tools = new Map();
+	const relayTools = new Map();
 	let skill;
 	let section;
 	const fs = makeFs(root);
@@ -52,13 +53,17 @@ function makeCtx(root) {
 			return factory();
 		},
 		tools: {
+			/** Stand-in registry: the plugin looks relay tools up by name. */
+			get(toolName) {
+				return relayTools.get(toolName);
+			},
 			register(tool) {
 				tools.set(tool.name, tool);
 				return () => tools.delete(tool.name);
 			}
 		}
 	};
-	return { ctx, tools, getSkill: () => skill, getSection: () => section };
+	return { ctx, tools, relayTools, getSkill: () => skill, getSection: () => section };
 }
 
 /** Tool execution context, shaped like the host's (cwd lives on session.header). */
@@ -424,6 +429,96 @@ test('commander_handoff rejects an expert outside the roster', async () => {
 				makeExec(root)
 			),
 			/不在名册里/
+		);
+	} finally {
+		cleanup();
+	}
+});
+
+test('commander_handoff deliver relays through the host agent-team tool', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools, relayTools } = makeCtx(root);
+		const sent = [];
+		relayTools.set('agent_teams_send_message', {
+			async execute(args) {
+				sent.push(args);
+				return { message_id: 'msg-1', from: 'captain', to: args.to, delivered: 'wake' };
+			}
+		});
+		plugin.apply(ctx, {});
+		const created = await tools.get('commander_handoff').execute(
+			{
+				action: 'create',
+				task: '退款 状态机',
+				from: 'qa-engineer',
+				to: 'bug-diagnosis-expert',
+				summary: '事务顺序颠倒',
+				evidence: ['pytest -q → 3 failed'],
+				deliver: true,
+				toMember: 'diagnoser'
+			},
+			makeExec(root)
+		);
+		assert.equal(sent.length, 1);
+		assert.equal(sent[0].to, 'diagnoser');
+		assert.match(sent[0].content, /^【交接】退款 状态机/);
+		assert.match(created.text, /--- 已投递 ---/);
+		assert.match(created.text, /captain → diagnoser／|captain → diagnoser/);
+		assert.match(created.text, /投递方式 wake/);
+	} finally {
+		cleanup();
+	}
+});
+
+test('commander_handoff deliver explains itself when no team tool exists', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		await assert.rejects(
+			tools.get('commander_handoff').execute(
+				{
+					action: 'create',
+					task: 'x',
+					from: 'qa-engineer',
+					to: 'bug-diagnosis-expert',
+					summary: '结论',
+					deliver: true,
+					toMember: 'nobody'
+				},
+				makeExec(root)
+			),
+			/没有 agent team 投递工具/
+		);
+	} finally {
+		cleanup();
+	}
+});
+
+test('commander_handoff deliver needs a target', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools, relayTools } = makeCtx(root);
+		relayTools.set('agent_teams_send_message', {
+			async execute() {
+				return {};
+			}
+		});
+		plugin.apply(ctx, {});
+		await assert.rejects(
+			tools.get('commander_handoff').execute(
+				{
+					action: 'create',
+					task: 'x',
+					from: 'qa-engineer',
+					to: 'bug-diagnosis-expert',
+					summary: '结论',
+					deliver: true
+				},
+				makeExec(root)
+			),
+			/toMember/
 		);
 	} finally {
 		cleanup();

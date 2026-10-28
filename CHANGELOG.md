@@ -14,16 +14,17 @@
 
 ### Added
 
-- **技能注册**：`assets/commander.md`（约 84.7k 字符）在运行时注册为 `commander` 技能，
+- **技能注册**：`assets/commander.md`（约 84.9k 字符）在运行时注册为 `commander` 技能，
   随插件版本走，不受用户目录里旧同名技能影响。
-- **常驻纪律段**：`buildCharter()` 生成约 1.7k 字符的系统提示段落，每个会话都在场，
+- **常驻纪律段**：`buildCharter()` 生成约 1.8k 字符的系统提示段落，每个会话都在场，
   含派发闸门 5 条、专家召集纪律 4 条、通信纪律 3 条、裁决纪律 6 条、记忆与留痕 4 条、工具速查 5 条。
 - **五个工具**：
   - `commander_dispatch_check`：派发前闸门，7 个阻断码（`D1_no_assignee`、`D2_no_acceptance`、
     `D3_review_without_upstream`、`D4_self_review`、`D5_over_concurrency`、`D6_unknown_expert`、
     `D7_unknown_peer`）与 4 个告警码（`W1_no_files`、`W2_write_conflict`、`W3_no_dependencies`、`W4_no_expert`）。
   - `commander_handoff`：`create` / `read` 专家交接单，落盘 `.agent/plans/handoffs/`，
-    并输出可直接粘贴进 `send_message` 的消息正文；消息投递仍由宿主的 agent team 负责。
+    并输出可直接粘贴进 `send_message` 的消息正文；`deliver: true` + `toMember` 时经宿主的
+    `agent_teams_send_message` 直投（`from` 由宿主认定，不冒充专家）。
   - `commander_expert`：19 位专家的名册查询与派遣要求（七节：何时召唤 / 派发时必须给到 /
     必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）。
   - `commander_scoreboard`：`init` / `adjust` / `show`，落盘为 `.agent/plans/<task>-expert-scoreboard.md`。

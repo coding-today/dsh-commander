@@ -589,6 +589,8 @@ PY
 
 落盘 `<workspace>/.agent/plans/handoffs/<task>--<from>-to-<to>.md`，并直接给出可粘贴进 `send_message` / `agent_teams_send_message` 的消息正文。**消息投递由宿主的 agent team 负责；插件负责的是「交接了什么、证据在哪」，`read` 可随时取回。** 任务书里写 `peers`（名册 slug）才允许专家横向联系，未列名的经指挥官转达。
 
+要免去手工粘贴，加 `"deliver": true, "toMember": "<团队成员名|captain>"`：插件调用宿主的 `agent_teams_send_message` 把这段正文直接投进对方收件箱，回执里给出 `live / wake / mailbox / duplicate`。**`from` 由宿主按调用者身份认定，插件与模型都不能冒充专家署名**；会话里没有团队时工具会明确拒绝并提示改走粘贴。
+
 ### 4. 专家记分牌 · `commander_scoreboard`
 
 ```json

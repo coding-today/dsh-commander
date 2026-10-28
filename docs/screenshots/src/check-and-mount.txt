@@ -3,11 +3,11 @@ lint: eslint . ✓
 format: prettier --check . ✓
 roster: roster appendix is up to date
 examples: examples/gate-output*.txt match the implementation
-# tests 68
-# pass 68
+# tests 71
+# pass 71
 # fail 0
 
 $ DSH_COMMANDER_TRACE=1 dsh --profile web --no-open
-[dsh-commander] skill "commander" registered (84714 chars) from …/assets/commander.md
+[dsh-commander] skill "commander" registered (84928 chars) from …/assets/commander.md
 [dsh-commander] tools registered: commander_dispatch_check / commander_scoreboard / commander_ledger / commander_expert / commander_handoff
 [dsh-commander] mounted (skill=true charter=true tools=true)

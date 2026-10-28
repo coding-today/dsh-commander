@@ -143,6 +143,11 @@ Warning codes: `W1_no_files`, `W2_write_conflict`, `W3_no_dependencies`, `W4_no_
 Writes `.agent/plans/handoffs/<task>--<from>-to-<to>.md` and returns a **message body ready to paste into
 `send_message` / `agent_teams_send_message`** — delivery belongs to the host; the note owns the content and evidence.
 
+Add `deliver: true` + `toMember: "<teammate|captain>"` to skip the manual paste: the plugin calls the host's
+`agent_teams_send_message` and the message lands in the recipient's inbox, with the receipt reporting
+`live / wake / mailbox / duplicate`. **`from` is assigned by the host from the caller's identity** — neither the
+plugin nor the model may sign as an expert; without a team the tool refuses and tells you to paste instead.
+
 ### `commander_scoreboard` — expert scoring
 
 `init` (needs `task` + `experts`) ｜ `adjust` (needs a reason) ｜ `show`.
@@ -215,10 +220,11 @@ Skill precedence is `project > runtime > user`; the plugin's runtime skill overr
 same-name skill. Edit `lib/experts.js` and run `pnpm run roster` to change the roster.
 
 **5. How do experts talk to each other?** Delivery is a host capability (`send_message` /
-`agent_teams_send_message`); this plugin does not take over transport. It owns the _discipline_: a task book
-must list `peers` to allow lateral contact (unknown → `D7_unknown_peer`), a handover must produce a
-`commander_handoff` note, anything unlisted goes through the commander, and there is exactly one source of
-external conclusions.
+`agent_teams_send_message`); this plugin does not take over transport and never impersonates an expert. It owns
+the _discipline_ and the handover content: a task book must list `peers` to allow lateral contact
+(unknown → `D7_unknown_peer`), a handover must produce a `commander_handoff` note (which can `deliver: true`
+straight into a teammate's inbox), anything unlisted goes through the commander, and there is exactly one
+source of external conclusions.
 
 **6. What happens if I score in a read-only session?** The sandbox rejects the write and the tool returns an
 error. There is no write path that bypasses session permissions.

@@ -145,6 +145,10 @@ node scripts/commander-cli.mjs experts quality
 落盘 `.agent/plans/handoffs/<task>--<from>-to-<to>.md`，并直接输出**可粘贴进 `send_message` /
 `agent_teams_send_message` 的消息正文**——投递归宿主，交接内容与证据归这张单子。
 
+加 `deliver: true` + `toMember: "<团队成员名|captain>"` 可以免去手工粘贴：插件调用宿主的
+`agent_teams_send_message` 把正文直接投进对方收件箱，回执给出 `live / wake / mailbox / duplicate`。
+**`from` 由宿主按调用者身份认定**，插件与模型都不能冒充专家署名；会话里没有团队时工具会明确拒绝。
+
 ### `commander_scoreboard` — 专家记分牌
 
 `init`（建牌，需 `task` + `experts`）｜`adjust`（加减分，必须写理由）｜`show`（读取）。
@@ -214,8 +218,9 @@ node scripts/commander-cli.mjs experts quality
 改名册请改 `lib/experts.js` 后跑 `pnpm run roster`。
 
 **5. 专家之间怎么互相通信？** 消息投递是宿主的能力（`send_message` / `agent_teams_send_message`），
-本插件不接管传输。它管的是**通信纪律**：任务书里写 `peers` 才允许横向联系（不在名册 → `D7_unknown_peer`），
-交接必须产出 `commander_handoff` 单据，未列名的一律经指挥官转达，对外结论只有一个来源。
+本插件不接管传输、也不冒充任何专家。它管的是**通信纪律 + 交接内容**：任务书里写 `peers` 才允许横向联系
+（不在名册 → `D7_unknown_peer`），交接必须产出 `commander_handoff` 单据（可 `deliver:true` 直投），
+未列名的一律经指挥官转达，对外结论只有一个来源。
 
 **6. 只读会话里记账会怎样？** 会被沙箱拒绝并返回错误。工具不提供绕过会话权限的写盘路径。
 
