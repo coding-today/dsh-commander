@@ -7,7 +7,7 @@
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#compatibility)
 [![DSH tested on 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#compatibility)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-58%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-68%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -23,10 +23,10 @@ A DeepSeek Harness plugin that installs the _commander_ methodology for multi-ex
 
 After installing you get four things:
 
-- **An always-on charter** (~1.4k chars) injected into the system prompt — present in every session
-- **A playbook skill** (`commander`, ~83.7k chars) with the roster, the seven-phase workflow and field lessons
+- **An always-on charter** (~1.7k chars) injected into the system prompt — present in every session
+- **A playbook skill** (`commander`, ~84.7k chars) with the roster, the seven-phase workflow and field lessons
 - **A 19-expert roster** where every expert carries seven requirements (when to summon / what you must provide / what they must return / acceptance criteria / forbidden moves / penalties / handoff)
-- **Four tools** — pre-dispatch gate, roster lookup, expert scoreboard, lessons ledger
+- **Five tools** — pre-dispatch gate, roster lookup, expert handoff, expert scoreboard, lessons ledger
 
 It does not think for you and does not dispatch for you. It puts a checkpoint before dispatch and after handoff, so "sent, returned, judged" leaves evidence that can be re-checked later.
 
@@ -99,8 +99,9 @@ Day-to-day rhythm inside a session:
 1. You: "commanders, split this work"          → skill + always-on charter load
 2. It calls commander_dispatch_check           → fix assignee / acceptance / dependsOn until it passes
 3. It calls commander_expert brief <slug>      → paste the seven requirements into the task
-4. On completion: commander_scoreboard adjust  → score with a written reason
-5. Wrap-up: commander_ledger                   → record what worked and what bit
+4. On handover: commander_handoff              → note lands in .agent/plans/handoffs/
+5. On completion: commander_scoreboard adjust  → score with a written reason
+6. Wrap-up: commander_ledger                   → record what worked and what bit
 ```
 
 ### Verify without installing
@@ -128,12 +129,19 @@ Task fields: `subject` (required), `assignee`, `expert` (roster slug), `role`
 (`impl`/`review`/`qa`/`doc`/`research`), `acceptance`, `files`, `dependsOn` (task number, **1-based**, or a subject), `running`.
 
 Blocking codes: `D1_no_assignee`, `D2_no_acceptance`, `D3_review_without_upstream`, `D4_self_review`,
-`D5_over_concurrency`, `D6_unknown_expert`.
+`D5_over_concurrency`, `D6_unknown_expert`, `D7_unknown_peer` (a `peers` entry outside the roster).
 Warning codes: `W1_no_files`, `W2_write_conflict`, `W3_no_dependencies`, `W4_no_expert`.
 
 ### `commander_expert` — the roster
 
 `action: list` (filter by division) ｜ `brief` (seven requirements for one expert) ｜ `divisions`.
+
+### `commander_handoff` — handoffs between experts
+
+`create` (write the note) ｜ `read` (fetch it). Parameters: `task`, `from`, `to` (roster slugs),
+`summary` (one-line conclusion; empty is rejected), `evidence`, `openItems`, `asks`, `at`.
+Writes `.agent/plans/handoffs/<task>--<from>-to-<to>.md` and returns a **message body ready to paste into
+`send_message` / `agent_teams_send_message`** — delivery belongs to the host; the note owns the content and evidence.
 
 ### `commander_scoreboard` — expert scoring
 
@@ -206,16 +214,22 @@ lower bound after upgrading DSH, or pass `--accept-risk` (recorded in the profil
 Skill precedence is `project > runtime > user`; the plugin's runtime skill overrides the user-level
 same-name skill. Edit `lib/experts.js` and run `pnpm run roster` to change the roster.
 
-**5. What happens if I score in a read-only session?** The sandbox rejects the write and the tool returns an
+**5. How do experts talk to each other?** Delivery is a host capability (`send_message` /
+`agent_teams_send_message`); this plugin does not take over transport. It owns the _discipline_: a task book
+must list `peers` to allow lateral contact (unknown → `D7_unknown_peer`), a handover must produce a
+`commander_handoff` note, anything unlisted goes through the commander, and there is exactly one source of
+external conclusions.
+
+**6. What happens if I score in a read-only session?** The sandbox rejects the write and the tool returns an
 error. There is no write path that bypasses session permissions.
 
-**6. `brief` says it matches several experts.** Matching accepts slug, full name or substring, but only a
+**7. `brief` says it matches several experts.** Matching accepts slug, full name or substring, but only a
 unique hit is returned. Fragments like `expert` match six — use the full slug.
 
-**7. `DSH_COMMANDER_TRACE=1` shows nothing?** The host filters `logger.info` during boot, so this plugin
+**8. `DSH_COMMANDER_TRACE=1` shows nothing?** The host filters `logger.info` during boot, so this plugin
 writes traces straight to stderr. Make sure your command has `2>&1 | grep dsh-commander`.
 
-**8. How do I add my own expert?** Add one entry in `lib/experts.js` (seven sections, penalty scale
+**9. How do I add my own expert?** Add one entry in `lib/experts.js` (seven sections, penalty scale
 `-15/-20/-25/-40`) → `pnpm run roster` → `pnpm test` → restart. The gate recognises the new slug automatically.
 
 ## Compatibility
@@ -238,13 +252,14 @@ dsh-commander/
 │   ├── defaults.js     # single source for dirs, file names, cap, error prefix
 │   ├── charter.js      # always-on charter text
 │   ├── experts.js      # 19 experts with seven requirements (single source)
+│   ├── handoff.js      # handoff notes and their message body
 │   ├── dispatch.js     # dispatch gate (pure functions)
 │   ├── scoreboard.js   # scoreboard markdown build/parse
 │   ├── ledger.js       # ledger insertion and rotation
 │   └── workspace.js    # path allow-list + host fs read/write
 ├── assets/commander.md # playbook skill (roster appendix is generated)
 ├── scripts/            # roster renderer, example regen, CLI, screenshots, one-command check
-├── test/               # 58 cases (node --test)
+├── test/               # 68 cases (node --test)
 ├── examples/           # runnable batches with real gate output
 ├── docs/screenshots/   # README images and their real source transcripts
 ├── .github/            # CI, issue and PR templates

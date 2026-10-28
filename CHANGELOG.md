@@ -14,14 +14,16 @@
 
 ### Added
 
-- **技能注册**：`assets/commander.md`（约 83.7k 字符）在运行时注册为 `commander` 技能，
+- **技能注册**：`assets/commander.md`（约 84.7k 字符）在运行时注册为 `commander` 技能，
   随插件版本走，不受用户目录里旧同名技能影响。
-- **常驻纪律段**：`buildCharter()` 生成约 1.4k 字符的系统提示段落，每个会话都在场，
-  含派发闸门 5 条、裁决纪律 6 条、记忆与留痕 4 条、专家召集纪律 4 条、工具速查 4 条。
-- **四个工具**：
-  - `commander_dispatch_check`：派发前闸门，6 个阻断码（`D1_no_assignee`、`D2_no_acceptance`、
-    `D3_review_without_upstream`、`D4_self_review`、`D5_over_concurrency`、`D6_unknown_expert`）
-    与 4 个告警码（`W1_no_files`、`W2_write_conflict`、`W3_no_dependencies`、`W4_no_expert`）。
+- **常驻纪律段**：`buildCharter()` 生成约 1.7k 字符的系统提示段落，每个会话都在场，
+  含派发闸门 5 条、专家召集纪律 4 条、通信纪律 3 条、裁决纪律 6 条、记忆与留痕 4 条、工具速查 5 条。
+- **五个工具**：
+  - `commander_dispatch_check`：派发前闸门，7 个阻断码（`D1_no_assignee`、`D2_no_acceptance`、
+    `D3_review_without_upstream`、`D4_self_review`、`D5_over_concurrency`、`D6_unknown_expert`、
+    `D7_unknown_peer`）与 4 个告警码（`W1_no_files`、`W2_write_conflict`、`W3_no_dependencies`、`W4_no_expert`）。
+  - `commander_handoff`：`create` / `read` 专家交接单，落盘 `.agent/plans/handoffs/`，
+    并输出可直接粘贴进 `send_message` 的消息正文；消息投递仍由宿主的 agent team 负责。
   - `commander_expert`：19 位专家的名册查询与派遣要求（七节：何时召唤 / 派发时必须给到 /
     必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）。
   - `commander_scoreboard`：`init` / `adjust` / `show`，落盘为 `.agent/plans/<task>-expert-scoreboard.md`。
@@ -41,6 +43,7 @@
   插件必须自带一份，代价是宿主与插件各持一个 `defineTool` 实例。
 - 只在 macOS + Node 22.22.3 + DSH 0.2.1-rc.2 实测；其他平台未验证。
 - 名册与专家要求硬编码在 `lib/experts.js`，增删专家需要改代码并重跑 `scripts/render-roster.mjs`。
+- 插件不做消息投递：横向通信靠宿主的 agent team，插件只产出交接单与 `peers` 白名单校验。
 
 [Unreleased]: https://github.com/coding-today/dsh-commander/compare/v0.1.0-rc.1...HEAD
 [0.1.0-rc.1]: https://github.com/coding-today/dsh-commander/releases/tag/v0.1.0-rc.1

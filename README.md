@@ -2,12 +2,12 @@
 
 # DSH Commander
 
-**让「指挥官」不再是一段提示词。** 专家名册、派发闸门、记分牌、经验台账——四样东西从纸面规则变成插件里的机械动作。
+**让「指挥官」不再是一段提示词。** 专家名册、派发闸门、专家交接、记分牌、经验台账——从纸面规则变成插件里的机械动作。
 
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#兼容性)
 [![DSH through 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#兼容性)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-58%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-68%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -23,10 +23,10 @@
 
 装完之后，你的 DSH 里会多出四样东西：
 
-- **一段常驻纪律**（约 1.4k 字符，注入 system prompt，每个会话都在场）
-- **一份作战手册**（`commander` 技能，约 83.7k 字符，含名册、7 阶段工作流、实战教训）
+- **一段常驻纪律**（约 1.7k 字符，注入 system prompt，每个会话都在场）
+- **一份作战手册**（`commander` 技能，约 84.7k 字符，含名册、7 阶段工作流、实战教训）
 - **19 位带要求的专家**（何时召唤 / 必须给到什么 / 必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）
-- **四个工具**（派发闸门、专家名册、记分牌、经验台账）
+- **五个工具**（派发闸门、专家名册、专家交接、记分牌、经验台账）
 
 它不替你思考，也不替你派活。它做的是**在你派活之前和收活之后卡住几个口子**，让「派出去、收回来、判对错」留下可复核的痕迹。
 
@@ -49,6 +49,7 @@
 | 「这些一起上」 | 一次派满 12 个子智能体，全部卡住 | `D5_over_concurrency` 拦下：超过并发上限 |
 | 「找个专家来处理」 | 专家名不存在，模型自由发挥 | `D6_unknown_expert` 拦下：名册里没有这个名字 |
 | 「这轮谁做得好？」 | 只活在聊天记录里，下次从零开始 | 记分牌落盘，加减分必须写理由 |
+| 「让 B 接着 A 的活」 | A 的结论只剩一句口头转述，B 拿不到证据 | `commander_handoff` 交接单落盘：结论、证据、未决项、下一棒要求 |
 
 ## 截图
 
@@ -98,8 +99,9 @@ DSH_COMMANDER_TRACE=1 dsh --profile web --no-open 2>&1 | grep dsh-commander
 1. 你说：帮我用指挥官把这活拆了          → 模型加载 commander 技能 + 常驻纪律段
 2. 派活前调 commander_dispatch_check     → 被拦就补 assignee / acceptance / dependsOn
 3. 派活前调 commander_expert brief <slug> → 把七节要求抄进任务书
-4. 完成后调 commander_scoreboard adjust  → 落盘加减分与理由
-5. 收尾调 commander_ledger               → 把有效做法与踩坑写进台账
+4. 换人或交棒时调 commander_handoff      → 交接单落到 .agent/plans/handoffs/
+5. 完成后调 commander_scoreboard adjust  → 落盘加减分与理由
+6. 收尾调 commander_ledger               → 把有效做法与踩坑写进台账
 ```
 
 ### 不装插件也能验
@@ -127,12 +129,21 @@ node scripts/commander-cli.mjs experts quality
 `acceptance`、`files`（影响面）、`dependsOn`（任务序号，**1 起**，也可写 subject）、`running`。
 
 阻断码：`D1_no_assignee`、`D2_no_acceptance`、`D3_review_without_upstream`、`D4_self_review`、
-`D5_over_concurrency`、`D6_unknown_expert`。
+`D5_over_concurrency`、`D6_unknown_expert`、`D7_unknown_peer`（`peers` 里写了名册外的专家）。
 告警码：`W1_no_files`、`W2_write_conflict`、`W3_no_dependencies`、`W4_no_expert`。
 
 ### `commander_expert` — 专家名册
 
 `action: list`（按领域筛选）｜`brief`（取某位的七节要求）｜`divisions`（列领域）。
+
+### `commander_handoff` — 专家交接
+
+`create`（写交接单）｜`read`（取回）。
+
+参数：`task`、`from`、`to`（名册 slug）、`summary`（一句话结论，空着会被拒）、
+`evidence`（可复核证据）、`openItems`（未决项）、`asks`（额外要求）、`at`。
+落盘 `.agent/plans/handoffs/<task>--<from>-to-<to>.md`，并直接输出**可粘贴进 `send_message` /
+`agent_teams_send_message` 的消息正文**——投递归宿主，交接内容与证据归这张单子。
 
 ### `commander_scoreboard` — 专家记分牌
 
@@ -202,15 +213,19 @@ node scripts/commander-cli.mjs experts quality
 技能优先级是 `project > runtime > user`：插件注册的 runtime 技能盖住用户目录里的同名技能。
 改名册请改 `lib/experts.js` 后跑 `pnpm run roster`。
 
-**5. 只读会话里记账会怎样？** 会被沙箱拒绝并返回错误。工具不提供绕过会话权限的写盘路径。
+**5. 专家之间怎么互相通信？** 消息投递是宿主的能力（`send_message` / `agent_teams_send_message`），
+本插件不接管传输。它管的是**通信纪律**：任务书里写 `peers` 才允许横向联系（不在名册 → `D7_unknown_peer`），
+交接必须产出 `commander_handoff` 单据，未列名的一律经指挥官转达，对外结论只有一个来源。
 
-**6. `brief` 说「对应多位专家」怎么办？** 匹配支持 slug / 全名 / 子串，但只在唯一命中时返回结果；
+**6. 只读会话里记账会怎样？** 会被沙箱拒绝并返回错误。工具不提供绕过会话权限的写盘路径。
+
+**7. `brief` 说「对应多位专家」怎么办？** 匹配支持 slug / 全名 / 子串，但只在唯一命中时返回结果；
 `expert` 这种碎片会命中 6 位，请写完整 slug。
 
-**7. 设了 `DSH_COMMANDER_TRACE=1` 却看不到那三行？** 宿主在启动阶段会过滤 `logger.info`，
+**8. 设了 `DSH_COMMANDER_TRACE=1` 却看不到那三行？** 宿主在启动阶段会过滤 `logger.info`，
 所以本插件把追踪直接写 stderr；确认命令带了 `2>&1 | grep dsh-commander`。
 
-**8. 怎么加一位自己的专家？** 在 `lib/experts.js` 增一条（七节要求 + 扣分标尺 `-15/-20/-25/-40`）
+**9. 怎么加一位自己的专家？** 在 `lib/experts.js` 增一条（七节要求 + 扣分标尺 `-15/-20/-25/-40`）
 → `pnpm run roster` → `pnpm test` → 重启。闸门会自动认这个新 slug。
 
 ## 兼容性
@@ -233,13 +248,14 @@ dsh-commander/
 │   ├── defaults.js     # 目录、文件名、并发上限、错误前缀的单一来源
 │   ├── charter.js      # 常驻纪律段文案
 │   ├── experts.js      # 19 位专家与七节要求（单一来源）
+│   ├── handoff.js      # 交接单的生成与消息正文
 │   ├── dispatch.js     # 派发闸门（纯函数）
 │   ├── scoreboard.js   # 记分牌 Markdown 生成与解析
 │   ├── ledger.js       # 台账插入、归档
 │   └── workspace.js    # 路径白名单 + 走宿主 fs 的读写
 ├── assets/commander.md # 技能正文（末尾名册附录是生成物）
 ├── scripts/            # 名册生成、示例重生成、CLI、截图渲染、一条命令检查
-├── test/               # 58 个用例（node --test）
+├── test/               # 68 个用例（node --test）
 ├── examples/           # 可运行的批次与真实闸门输出
 ├── docs/screenshots/   # README 截图与其真实输出源文本
 ├── .github/            # CI、issue / PR 模板

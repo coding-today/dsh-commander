@@ -153,6 +153,21 @@ def wrap(lines: list[str], mono, cjk, limit: float) -> list[str]:
         if measure(line, mono, cjk) <= limit:
             wrapped.append(line)
             continue
+        if " / " in line:
+            # Prefer breaking long "a / b / c" runs on the separator so a tool
+            # name never gets chopped in half.
+            indent = "    "
+            current = ""
+            for part in line.split(" / "):
+                piece = part if current == "" else f" / {part}"
+                if current != "" and measure(current + piece, mono, cjk) > limit:
+                    wrapped.append(current)
+                    current = indent + part
+                else:
+                    current += piece
+            if current:
+                wrapped.append(current)
+            continue
         indent = "  " if line.startswith("$ ") else "    "
         current = ""
         width = 0.0

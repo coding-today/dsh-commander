@@ -167,3 +167,40 @@ test('examples/gate-output*.txt match the current gate implementation', () => {
 		assert.equal(actual, want, `${expected} 与实现输出不一致，跑 node scripts/regen-examples.mjs`);
 	}
 });
+
+test('an unknown peer blocks: the handoff would go to nobody', () => {
+	const batch = [
+		{
+			subject: '退款 状态机',
+			assignee: 'qa-agent',
+			acceptance: 'pytest -q tests/test_refund.py',
+			expert: 'qa-engineer',
+			peers: ['bug-diagnosis-expert', 'nobody']
+		}
+	];
+	const result = checkDispatch(batch, { knownExperts: ['qa-engineer', 'bug-diagnosis-expert'] });
+	assert.equal(result.ok, false);
+	const codes = result.violations.map((item) => item.code);
+	assert.deepEqual(codes, ['D7_unknown_peer']);
+	assert.match(result.violations[0].message, /nobody/);
+});
+
+test('known peers are accepted and reported as checked', () => {
+	const batch = [
+		{
+			subject: '退款 状态机',
+			assignee: 'qa-agent',
+			acceptance: 'pytest -q tests/test_refund.py',
+			expert: 'qa-engineer',
+			peers: ['bug-diagnosis-expert']
+		}
+	];
+	const result = checkDispatch(batch, { knownExperts: ['qa-engineer', 'bug-diagnosis-expert'] });
+	assert.equal(result.ok, true);
+	assert.equal(result.violations.length, 0);
+});
+
+test('peers are ignored when no roster is provided', () => {
+	const batch = [{ subject: 'x', assignee: 'a', acceptance: 'cmd', peers: ['anything'] }];
+	assert.equal(checkDispatch(batch).ok, true);
+});

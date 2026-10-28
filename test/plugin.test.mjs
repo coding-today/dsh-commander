@@ -78,7 +78,7 @@ test('plugin exports the cordis contract', () => {
 	assert.ok(plugin.Config !== undefined);
 });
 
-test('apply registers the skill, the charter section and four tools', () => {
+test('apply registers the skill, the charter section and five tools', () => {
 	const { root, cleanup } = withRoot();
 	try {
 		const { ctx, tools, getSkill, getSection } = makeCtx(root);
@@ -93,9 +93,11 @@ test('apply registers the skill, the charter section and four tools', () => {
 		assert.equal(section.order, 118);
 		assert.equal(section.interpolate, false, 'charter must not be template-interpolated');
 		assert.match(section.text, /派发闸门/);
+		assert.match(section.text, /通信纪律/);
 		assert.deepEqual([...tools.keys()].sort(), [
 			'commander_dispatch_check',
 			'commander_expert',
+			'commander_handoff',
 			'commander_ledger',
 			'commander_scoreboard'
 		]);
@@ -350,6 +352,78 @@ test('tool arguments are validated before execution', async () => {
 		await assert.rejects(
 			() => tools.get('commander_scoreboard').execute({ action: 'nope', task: 'x' }, makeExec(root)),
 			/invalid arguments/
+		);
+	} finally {
+		cleanup();
+	}
+});
+
+test('commander_handoff writes a note and a paste-ready message', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		const tool = tools.get('commander_handoff');
+		const exec = makeExec(root);
+		const created = await tool.execute(
+			{
+				action: 'create',
+				task: '退款 状态机',
+				from: 'qa-engineer',
+				to: 'bug-diagnosis-expert',
+				summary: '事务顺序颠倒',
+				evidence: ['pytest -q → 3 failed'],
+				openItems: ['是否同一事务'],
+				asks: ['最小复现']
+			},
+			exec
+		);
+		const file = path.join(
+			root,
+			'.agent',
+			'plans',
+			'handoffs',
+			'退款-状态机--qa-engineer-to-bug-diagnosis-expert.md'
+		);
+		assert.ok(existsSync(file), 'handoff note should exist');
+		assert.match(created.text, /可直接发送给 Bug 根因诊断专家/);
+		assert.match(created.text, /【交接】/);
+		const onDisk = readFileSync(file, 'utf8');
+		assert.match(onDisk, /^# 交接单 · 退款 状态机/);
+
+		const again = await tool.execute(
+			{
+				action: 'read',
+				task: '退款 状态机',
+				from: 'qa-engineer',
+				to: 'bug-diagnosis-expert'
+			},
+			exec
+		);
+		assert.equal(again.text, onDisk);
+	} finally {
+		cleanup();
+	}
+});
+
+test('commander_handoff rejects an expert outside the roster', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		const tool = tools.get('commander_handoff');
+		await assert.rejects(
+			tool.execute(
+				{
+					action: 'create',
+					task: 'x',
+					from: 'qa-engineer',
+					to: 'nobody',
+					summary: '结论'
+				},
+				makeExec(root)
+			),
+			/不在名册里/
 		);
 	} finally {
 		cleanup();

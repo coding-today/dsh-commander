@@ -546,7 +546,7 @@ PY
 
 ## 机械动作（DSH-commander 插件）
 
-本技能由 `dsh-commander` 插件提供，技能正文随插件版本发布；插件启动时还会注册一条常驻 system prompt「指挥官纪律（DSH-commander）」和三个工具。**能用工具机械化的纪律，不要只靠自觉。**
+本技能由 `dsh-commander` 插件提供，技能正文随插件版本发布；插件启动时还会注册一条常驻 system prompt「指挥官纪律（DSH-commander）」和六个工具。**能用工具机械化的纪律，不要只靠自觉。**
 
 ### 1. 派发闸门 · `commander_dispatch_check`
 
@@ -561,10 +561,35 @@ PY
 ], "running": 2}
 ```
 
-阻断项：`D1_no_assignee`（无执行者）· `D2_no_acceptance`（无验收标准）· `D3_review_without_upstream`（审查无上游）· `D4_self_review`（作者自审）· `D5_over_concurrency`（超并发上限）。
-提醒项：`W1_no_files`（实现任务未声明影响面）· `W2_write_conflict`（同批两人写同一文件）· `W3_no_dependencies`（整批无依赖）。
+阻断项：`D1_no_assignee`（无执行者）· `D2_no_acceptance`（无验收标准）· `D3_review_without_upstream`（审查无上游）· `D4_self_review`（作者自审）· `D5_over_concurrency`（超并发上限）· `D6_unknown_expert`（专家不在名册）· `D7_unknown_peer`（横向通信对象不在名册）。
+提醒项：`W1_no_files`（实现任务未声明影响面）· `W2_write_conflict`（同批两人写同一文件）· `W3_no_dependencies`（整批无依赖）· `W4_no_expert`（没点名专家）。
 
-### 2. 专家记分牌 · `commander_scoreboard`
+### 2. 专家名册 · `commander_expert`
+
+```json
+{"action": "list", "division": "quality"}
+{"action": "brief", "expert": "qa-engineer"}
+{"action": "divisions"}
+```
+
+`brief` 输出七节要求（何时召唤 / 派发时必须给到 / 必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接），**原样写进任务书**；模糊名（如 `expert`）会命中多位，工具会拒绝并列出候选。
+
+### 3. 专家交接 · `commander_handoff`
+
+跨专家传递必须落成交接单：结论、证据、未决项、下一棒必须给到，缺一项就是口头转述。
+
+```json
+{"action": "create", "task": "退款状态机",
+ "from": "qa-engineer", "to": "bug-diagnosis-expert",
+ "summary": "三条用例失败，日志显示库存回滚早于退款落库",
+ "evidence": ["pytest -q tests/test_refund.py → 3 failed / 12 passed", "logs/refund.log:412 回滚先于 commit"],
+ "openItems": ["未确认是否为同一事务"],
+ "asks": ["给出根因与最小复现命令"]}
+```
+
+落盘 `<workspace>/.agent/plans/handoffs/<task>--<from>-to-<to>.md`，并直接给出可粘贴进 `send_message` / `agent_teams_send_message` 的消息正文。**消息投递由宿主的 agent team 负责；插件负责的是「交接了什么、证据在哪」，`read` 可随时取回。** 任务书里写 `peers`（名册 slug）才允许专家横向联系，未列名的经指挥官转达。
+
+### 4. 专家记分牌 · `commander_scoreboard`
 
 ```json
 {"action": "init",   "task": "退款状态机", "experts": [{"name": "backend", "role": "后端"}, {"name": "reviewer", "role": "审查"}]}
@@ -574,7 +599,7 @@ PY
 
 落盘 `<workspace>/.agent/plans/<task>-expert-scoreboard.md`。规则不变：起始 100、加减分必写理由、以磁盘证据为准。**口头表扬与口头扣分都不算，写进这个文件才算。**
 
-### 3. 经验台账 · `commander_ledger`
+### 5. 经验台账 · `commander_ledger`
 
 ```json
 {"kind": "failure", "title": "「started」回执不等于在跑", "body": "现象：3 个子代理全部停在 ready、磁盘零产出。证据：list_agents 全 inactive + find -newer 无新文件。做法：派发后立刻核状态，ready 用 send_message 唤醒，不新开。"}
