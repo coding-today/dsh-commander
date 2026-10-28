@@ -1,31 +1,32 @@
 name: ci
 
 on:
-    push:
-        branches: [main]
-    pull_request:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
-    check:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: pnpm/action-setup@v4
-              with:
-                  version: 9
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: pnpm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
 
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm run lint
-            - run: pnpm run format:check
-            - run: pnpm run roster:check
-            - run: pnpm test
-            - run: npm pack --dry-run
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run format:check
+      - run: pnpm run roster:check
+      - run: pnpm test
+      # prepack 会再跑一遍 check，这里只要清单，不重复跑测试
+      - run: npm pack --dry-run --ignore-scripts

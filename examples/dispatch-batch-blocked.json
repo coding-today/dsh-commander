@@ -1,7 +1,7 @@
 {
-	"running": 0,
-	"tasks": [
-		{ "subject": "改退款逻辑", "assignee": "backend", "expert": "fullstack-arch" },
-		{ "subject": "让某位专家看看这个 PR", "assignee": "", "role": "review", "acceptance": "看情况" }
-	]
+  "running": 0,
+  "tasks": [
+    { "subject": "改退款逻辑", "assignee": "backend", "expert": "fullstack-arch" },
+    { "subject": "让某位专家看看这个 PR", "assignee": "", "role": "review", "acceptance": "看情况" }
+  ]
 }

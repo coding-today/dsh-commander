@@ -1,22 +1,22 @@
 {
-	"running": 1,
-	"maxConcurrency": 8,
-	"tasks": [
-		{
-			"subject": "退款状态机重构",
-			"assignee": "fe-1",
-			"expert": "fullstack-arch",
-			"acceptance": "pytest tests/test_refund.py 全绿；退款入口 3 条状态迁移手测通过并贴日志",
-			"files": ["src/refund/"]
-		},
-		{
-			"subject": "退款状态机审查",
-			"assignee": "rev-1",
-			"role": "review",
-			"expert": "code-review-expert",
-			"acceptance": "逐条意见含 文件:行号 与修复建议，最后给出 verdict: pass | needs_revision",
-			"files": ["src/refund/"],
-			"dependsOn": [1]
-		}
-	]
+  "running": 1,
+  "maxConcurrency": 8,
+  "tasks": [
+    {
+      "subject": "退款状态机重构",
+      "assignee": "fe-1",
+      "expert": "fullstack-arch",
+      "acceptance": "pytest tests/test_refund.py 全绿；退款入口 3 条状态迁移手测通过并贴日志",
+      "files": ["src/refund/"]
+    },
+    {
+      "subject": "退款状态机审查",
+      "assignee": "rev-1",
+      "role": "review",
+      "expert": "code-review-expert",
+      "acceptance": "逐条意见含 文件:行号 与修复建议，最后给出 verdict: pass | needs_revision",
+      "files": ["src/refund/"],
+      "dependsOn": [1]
+    }
+  ]
 }

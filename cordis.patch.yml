@@ -17,15 +17,15 @@
 # Everything is opt-out through `config`; the defaults are the whole product.
 
 - insert:
-      - id: dsh-commander
-        name: 'dsh-commander'
-        config:
-            skillName: commander
-            registerSkill: true
-            # skillDescription: <技能目录里的一句话简介，默认已内置>
-            promptSection: true
-            promptOrder: 118
-            tools: true
-            plansDir: .agent/plans
-            ledgerFile: commander-ledger.md
-            maxConcurrency: 8
+    - id: dsh-commander
+      name: 'dsh-commander'
+      config:
+        skillName: commander
+        registerSkill: true
+        # skillDescription: <技能目录里的一句话简介，默认已内置>
+        promptSection: true
+        promptOrder: 118
+        tools: true
+        plansDir: .agent/plans
+        ledgerFile: commander-ledger.md
+        maxConcurrency: 8
