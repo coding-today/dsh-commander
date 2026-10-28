@@ -2,12 +2,12 @@
 
 # DSH Commander
 
-**Stop treating your multi-agent playbook as a suggestion.** Expert roster, pre-dispatch gate, scoreboard and ledger — four things a Markdown skill cannot enforce, shipped as a DeepSeek Harness plugin.
+**Make multi-agent discipline part of the host, not a suggestion.** Expert roster, pre-dispatch gate, handover, scoreboard and ledger — rules that block, record and can be re-checked.
 
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#compatibility)
 [![DSH tested on 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#compatibility)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-71%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-81%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -19,14 +19,15 @@
 
 ## What this is
 
-A DeepSeek Harness plugin that installs the _commander_ methodology for multi-expert work into the host itself, instead of leaving it in a Markdown skill the model may or may not load.
+A DeepSeek Harness plugin that installs the _commander_ discipline for multi-expert work into the host itself, instead of leaving it in a document someone has to remember.
 
-After installing you get four things:
+After installing you get five things:
 
 - **An always-on charter** (~1.7k chars) injected into the system prompt — present in every session
 - **A playbook skill** (`commander`, ~84.7k chars) with the roster, the seven-phase workflow and field lessons
 - **A 19-expert roster** where every expert carries seven requirements (when to summon / what you must provide / what they must return / acceptance criteria / forbidden moves / penalties / handoff)
 - **Five tools** — pre-dispatch gate, roster lookup, expert handoff, expert scoreboard, lessons ledger
+- **A sidebar panel** — what every expert is doing right now, refreshed every 3 seconds
 
 It does not think for you and does not dispatch for you. It puts a checkpoint before dispatch and after handoff, so "sent, returned, judged" leaves evidence that can be re-checked later.
 
@@ -115,7 +116,7 @@ node scripts/commander-cli.mjs brief qa-engineer
 node scripts/commander-cli.mjs experts quality
 ```
 
-## The four tools
+## The five tools
 
 ### `commander_dispatch_check` — the pre-dispatch gate
 
@@ -208,11 +209,12 @@ Set in the profile's `cordis.patch.yml`:
 | `registerSkill`    | `true`                | Register the playbook skill                          |
 | `promptSection`    | `true`                | Inject the charter section                           |
 | `promptOrder`      | `118`                 | Charter order (after 0, before host PLAN_POLICY 500) |
-| `tools`            | `true`                | Register the four tools                              |
+| `tools`            | `true`                | Register the five tools                              |
 | `plansDir`         | `.agent/plans`        | Scoreboard and ledger directory (workspace-relative) |
 | `ledgerFile`       | `commander-ledger.md` | Ledger file name (no directories)                    |
 | `maxConcurrency`   | `8`                   | Shared by the charter text and the gate              |
 | `skillDescription` | built in              | Skill description for the catalog                    |
+| `monitor`          | `true`                | Sidebar panel and the `/ext/commander/state` route   |
 
 `plansDir` / `ledgerFile` are allow-list validated: absolute paths, `~` and `..` are rejected and the
 default is used with a warning. All writes go through the host's `ctx.fs`, so **a read-only session cannot
@@ -236,9 +238,10 @@ inside the plugin directory first.
 **3. Install refused with `incompatible with dsh …`?** The version gate reads `engines.dsh`. Bump the
 lower bound after upgrading DSH, or pass `--accept-risk` (recorded in the profile).
 
-**4. My existing `~/.dsh/skills/commander.md` stopped winning.**
-Skill precedence is `project > runtime > user`; the plugin's runtime skill overrides the user-level
-same-name skill. Edit `lib/experts.js` and run `pnpm run roster` to change the roster.
+**4. A project ships its own `commander` skill — who wins?**
+Precedence is `project > runtime > user`: a project-level skill of the same name overrides the one this plugin
+registers at runtime, which in turn overrides a `user` skill. To let this plugin's playbook win, do not ship a
+same-name skill in the project. Edit `lib/experts.js` and run `pnpm run roster` to change the roster.
 
 **5. How do experts talk to each other?** Delivery is a host capability (`send_message` /
 `agent_teams_send_message`); this plugin does not take over transport and never impersonates an expert. It owns
@@ -275,7 +278,7 @@ writes traces straight to stderr. Make sure your command has `2>&1 | grep dsh-co
 ```text
 dsh-commander/
 ├── lib/
-│   ├── index.js        # apply: skill registration, charter, four tools
+│   ├── index.js        # apply: skill, charter, five tools, monitor route
 │   ├── defaults.js     # single source for dirs, file names, cap, error prefix
 │   ├── charter.js      # always-on charter text
 │   ├── experts.js      # 19 experts with seven requirements (single source)
@@ -283,10 +286,12 @@ dsh-commander/
 │   ├── dispatch.js     # dispatch gate (pure functions)
 │   ├── scoreboard.js   # scoreboard markdown build/parse
 │   ├── ledger.js       # ledger insertion and rotation
-│   └── workspace.js    # path allow-list + host fs read/write
+│   ├── workspace.js    # path allow-list + host fs read/write
+│   ├── monitor.js      # read-only team state for the sidebar panel
+│   └── client.js       # web sidebar panel
 ├── assets/commander.md # playbook skill (roster appendix is generated)
 ├── scripts/            # roster renderer, example regen, CLI, screenshots, one-command check
-├── test/               # 71 cases (node --test)
+├── test/               # 81 cases (node --test)
 ├── examples/           # runnable batches with real gate output
 ├── docs/screenshots/   # README images and their real source transcripts
 ├── .github/            # CI, issue and PR templates

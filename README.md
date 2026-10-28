@@ -2,12 +2,12 @@
 
 # DSH Commander
 
-**让「指挥官」不再是一段提示词。** 专家名册、派发闸门、专家交接、记分牌、经验台账——从纸面规则变成插件里的机械动作。
+**把多专家协作的纪律，装进宿主本体。** 专家名册、派发闸门、专家交接、记分牌、经验台账——规则不再是建议，而是会拦人、会落盘的机械动作。
 
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#兼容性)
 [![DSH through 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#兼容性)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-71%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-81%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -19,19 +19,20 @@
 
 ## 这是什么
 
-一个 DeepSeek Harness 插件：把**多专家协同作战**的指挥官方法论装进 DSH 本体，而不是留在一份 Markdown 技能里、等模型想起来才加载。
+一个 DeepSeek Harness 插件：把**多专家协同作战**的纪律装进 DSH 本体，而不是写在一份文档里等人记得。
 
-装完之后，你的 DSH 里会多出四样东西：
+装完之后，你的 DSH 里会多出五样东西：
 
 - **一段常驻纪律**（约 1.7k 字符，注入 system prompt，每个会话都在场）
 - **一份作战手册**（`commander` 技能，约 84.7k 字符，含名册、7 阶段工作流、实战教训）
 - **19 位带要求的专家**（何时召唤 / 必须给到什么 / 必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）
 - **五个工具**（派发闸门、专家名册、专家交接、记分牌、经验台账）
+- **一块侧边栏面板**（每位专家此刻在干什么，3 秒一刷）
 
 它不替你思考，也不替你派活。它做的是**在你派活之前和收活之后卡住几个口子**，让「派出去、收回来、判对错」留下可复核的痕迹。
 
 **目录**：[它解决什么问题](#它解决什么问题) · [截图](#截图) · [三分钟上手](#三分钟上手) ·
-[四个工具](#四个工具) · [专家名册](#专家名册19-位) · [CLI](#不装插件也能验) · [配置](#配置) ·
+[五个工具](#五个工具) · [专家名册](#专家名册19-位) · [CLI](#不装插件也能验) · [配置](#配置) ·
 [它不做什么](#它不做什么) · [常见问题](#常见问题) · [兼容性](#兼容性) · [仓库结构](#仓库结构)
 
 ---
@@ -115,7 +116,7 @@ node scripts/commander-cli.mjs brief qa-engineer
 node scripts/commander-cli.mjs experts quality
 ```
 
-## 四个工具
+## 五个工具
 
 ### `commander_dispatch_check` — 派发前闸门
 
@@ -206,11 +207,12 @@ curl -s http://127.0.0.1:<port>/ext/commander/state | jq .totals
 | `registerSkill` | `true` | 是否注册技能正文 |
 | `promptSection` | `true` | 是否注入常驻纪律段 |
 | `promptOrder` | `118` | 纪律段顺序（0 之后、宿主 PLAN_POLICY 500 之前） |
-| `tools` | `true` | 是否注册四个工具 |
+| `tools` | `true` | 是否注册五个工具 |
 | `plansDir` | `.agent/plans` | 记分牌与台账目录（工作区相对路径） |
 | `ledgerFile` | `commander-ledger.md` | 台账文件名（不能带目录） |
 | `maxConcurrency` | `8` | 纪律段与闸门共用的并发上限 |
 | `skillDescription` | 内置 | 技能的市场描述 |
+| `monitor` | `true` | 是否提供侧边栏面板与 `/ext/commander/state` 路由 |
 
 `plansDir` / `ledgerFile` 会过白名单校验：绝对路径、`~`、`..` 一律拒绝并回退默认值（同时打一条 warn）。
 所有写入都走宿主 `ctx.fs`，**只读会话写不进去**——这是有意的边界，工具不绕过会话权限。
@@ -232,9 +234,9 @@ curl -s http://127.0.0.1:<port>/ext/commander/state | jq .totals
 **3. 安装时被 `incompatible with dsh …` 拒了？** 版本闸读 `engines.dsh`。升级 DSH 后同步调下限；
 确认风险可加 `--accept-risk`（会记在 profile 里）。
 
-**4. 我原来的 `~/.dsh/skills/commander.md` 怎么不生效了？**
-技能优先级是 `project > runtime > user`：插件注册的 runtime 技能盖住用户目录里的同名技能。
-改名册请改 `lib/experts.js` 后跑 `pnpm run roster`。
+**4. 项目里也有一个同名 `commander` 技能，谁生效？**
+技能优先级是 `project > runtime > user`：项目级同名技能盖住插件注册的 runtime 技能，反过来盖住 `user` 目录。
+要让插件这份手册说了算，就别在项目里放同名技能。改名册请改 `lib/experts.js` 后跑 `pnpm run roster`。
 
 **5. 专家之间怎么互相通信？** 消息投递是宿主的能力（`send_message` / `agent_teams_send_message`），
 本插件不接管传输、也不冒充任何专家。它管的是**通信纪律 + 交接内容**：任务书里写 `peers` 才允许横向联系
@@ -268,7 +270,7 @@ curl -s http://127.0.0.1:<port>/ext/commander/state | jq .totals
 ```text
 dsh-commander/
 ├── lib/
-│   ├── index.js        # apply：技能注册 / 纪律段 / 四个工具
+│   ├── index.js        # apply：技能注册 / 纪律段 / 五个工具 / 监控路由
 │   ├── defaults.js     # 目录、文件名、并发上限、错误前缀的单一来源
 │   ├── charter.js      # 常驻纪律段文案
 │   ├── experts.js      # 19 位专家与七节要求（单一来源）
@@ -276,10 +278,12 @@ dsh-commander/
 │   ├── dispatch.js     # 派发闸门（纯函数）
 │   ├── scoreboard.js   # 记分牌 Markdown 生成与解析
 │   ├── ledger.js       # 台账插入、归档
+│   ├── monitor.js      # 只读聚合团队状态，供侧边栏轮询
+│   ├── client.js       # Web 侧边栏「专家」面板
 │   └── workspace.js    # 路径白名单 + 走宿主 fs 的读写
 ├── assets/commander.md # 技能正文（末尾名册附录是生成物）
 ├── scripts/            # 名册生成、示例重生成、CLI、截图渲染、一条命令检查
-├── test/               # 71 个用例（node --test）
+├── test/               # 81 个用例（node --test）
 ├── examples/           # 可运行的批次与真实闸门输出
 ├── docs/screenshots/   # README 截图与其真实输出源文本
 ├── .github/            # CI、issue / PR 模板
