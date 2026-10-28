@@ -1,59 +1,61 @@
 # 发布前清单（0.1.0-rc.1）
 
 更新时间：2026-10-29
-结论：**可以进入 RC 发布流程，但发布前必须处理「包名」与「依赖重复」两项**，其余为可选改进。
+结论：**代码与工程规范已就绪，可以建远端仓库；npm 发布前还剩三件事要你拍板/替换。**
 
 ---
 
-## 一、已验证（有证据）
+## 一、已验证（有证据，可复跑）
 
 | 项 | 证据 |
 | --- | --- |
-| 单元与集成测试 | `node --test test/*.test.mjs` → **43/43 通过**（77ms） |
+| 单元与集成测试 | `node --test test/*.test.mjs` → **43/43 通过** |
+| 静态检查 | `npx eslint .` → 0 问题；`npx prettier --check .` → `All matched files use Prettier code style!` |
 | 名册与技能附录同步 | `node scripts/render-roster.mjs --check` → `roster appendix is up to date` |
-| 真机挂载 | `DSH_COMMANDER_TRACE=1 dsh --profile web --port 8100 --no-open` 日志：`skill "commander" registered (83751 chars)` / `tools registered: commander_dispatch_check / commander_scoreboard / commander_ledger / commander_expert` / `mounted (skill=true charter=true tools=true)` |
-| 与宿主无关的激活失败 | `did not activate` 仅 2 条：`web-ui-task-board`（ledger 已被另一进程占用）与 `experimental-inspector`（fetch accessor），均与 commander 无关 |
+| 一条命令跑全 | `pnpm run check`（lint + format:check + roster:check + test） |
+| 真机挂载 | `DSH_COMMANDER_TRACE=1 dsh --profile web --port 8100 --no-open` → `skill "commander" registered (83751 chars)` / `tools registered: 四工具` / `mounted (skill=true charter=true tools=true)` |
+| 与宿主无关的激活失败 | `did not activate` 仅 2 条：`web-ui-task-board`（ledger 被另一进程占用）、`experimental-inspector`（fetch accessor），与本插件无关 |
 | profile 侧可解析 | `cd ~/.dsh/profiles/web && node -e "import('dsh-commander')"` → 导出 `Config/apply/inject/name` |
-| 打包内容 | `npm pack --dry-run` → **13 files / 120.1 kB packed / 277.1 kB unpacked** |
-| 沙箱合规 | 写盘全部经 `ctx.fs`（`resolve` / `lstat` / `readText` / `writeText`），插件**不接受 `dir` 参数**，根为会话工作目录 |
-| 关键改造 | B1/B2/B3、R1–R9、S1–S8、D1/D5/D6/D7/D9 已落地（见 CHANGELOG 与 git 历史） |
+| 打包内容 | `npm pack --dry-run` → 13 files / ~120 kB packed |
+| 依赖可从公网安装 | `@deepseek-ai/dsh-tools@0.2.1-rc.2` 与 `@deepseek-ai/schemastery@3.18.5` 在 npmjs 与 npmmirror 均可解析（CI 不会因私有包失败） |
+| Git 历史 | `main` 分支首个提交 `715d6fc`，39 个文件 / 4837 行 |
 
-## 二、发布阻断项（必须先做）
+## 二、开源工程规范（本轮补齐）
+
+| 面 | 文件 | 说明 |
+| --- | --- | --- |
+| 格式化 | `.prettierrc.json` / `.prettierignore` | tab 缩进、单引号、120 列、LF |
+| 静态检查 | `eslint.config.js` | `@eslint/js` recommended + 少量正确性规则（`eqeqeq`/`no-var`/`no-unused-vars`） |
+| 编辑器一致性 | `.editorconfig` / `.gitattributes` | 编码、行尾、缩进；文本统一 LF |
+| CI | `.github/workflows/ci.yml` | Node 22 + pnpm，跑 lint → format:check → roster:check → test → pack |
+| 贡献流程 | `CONTRIBUTING.md` | 代码与 JSDoc 用英文、用户文案用中文；新增工具/专家的步骤与清单 |
+| 安全 | `SECURITY.md` | 私有渠道报告 + 本插件的安全边界（沙箱、路径校验、无 shell 执行） |
+| 社区 | `CODE_OF_CONDUCT.md` | Contributor Covenant 2.1 改编 |
+| Issue/PR | `.github/ISSUE_TEMPLATE/*`、`pull_request_template.md` | 结构化必填项，要求贴证据 |
+| 示例 | `examples/` | 一份能通过的批次、一份被三条阻断拦下的批次，输出由脚本真跑生成 |
+| 忽略规则 | `.gitignore` | node_modules / tgz / 日志 / .env 等 |
+
+## 三、npm 发布阻断项（必须处理）
 
 1. **包名冲突**：npm 上 `dsh-commander` 已被 `yusi5587` 占用（v0.1.4，2026-08-19）。
-   - 方案：改 `@yuxianglin/dsh-commander`（作者 npm scope 推定，未验证归属）。
-   - 改名必须三处同步：`package.json.name`、`cordis.patch.yml` 的 `id` 与 `name`、README 安装命令。
-   - 若 `@yuxianglin` scope 不可用，备选：`dsh-cmdr`、`dsh-commander-plugin`、`dsh-discipline`（`dsh-crew` 已占）。
+   - 方案：`@yuxianglin/dsh-commander`（作者 scope 推定，**归属未验证**）。
+   - 改名三处同步：`package.json.name`、`cordis.patch.yml` 的 `id`/`name`、README 安装命令 + 徽章链接。
+   - 备选：`dsh-cmdr`、`dsh-commander-plugin`、`dsh-discipline`（`dsh-crew` 已占）。
 
-2. **依赖重复（R5 未真正解决）**：profile 内解析不到 `@deepseek-ai/dsh-tools` 的 peer，插件只能在 `dependencies` 里自带一份 **0.2.1-rc.2**。
-   - 后果：宿主与插件各自持有一份 `defineTool`，`instanceof` 类身份检查若被加严会分裂。
-   - 缓解：版本精确钉死 + `engines.dsh` 版本闸；需要上游提供「工具定义契约包」作为纯 peer 才能根治。
-   - 发布时在 README 的兼容性段保留这条说明，别让用户以为是普通依赖。
+2. **仓库地址是占位**：`package.json` 的 `repository` / `homepage` / `bugs` 与 README 的 CI 徽章都指向
+   `https://github.com/yuxianglin/dsh-commander`。建仓库后如果用户名不同，**四处一起替换**，否则徽章 404、npm 的 `repository` 也会指错。
 
-## 三、发布前建议做（非阻断）
+3. **依赖双份（结构性取舍）**：宿主的 peer 在 profile 内解析不到，插件只能把 `@deepseek-ai/dsh-tools` 放进 `dependencies` 并精确钉 `0.2.1-rc.2`。
+   - 后果：宿主与插件各持一份 `defineTool`，若上游加严 `instanceof` 检查会分裂。
+   - 现状：公网可安装（已验），所以不阻断发布；但 README 兼容性段必须保留这条，且 DSH 升到 0.2.2+ 时要跟版本。
 
-3. **全新环境的安装冒烟**：现在只在已装过依赖的本机验证。发布后应在一个干净 profile 里 `dsh plugin --profile web add @scope/pkg@next` → 启动 → 看 `mounted` 三行。
-4. **官方源登录**：本机 `~/.npmrc` 指 npmmirror，`npm whoami` 401。发布用 `npm login --registry=https://registry.npmjs.org`，首发 `npm publish --tag next`。
-5. **README 双语**：当前中文主文档 + English summary；市场里的样板（dsh-pua / dsh-code-review）是双文件或双语全文。
-6. **截图**：工具输出是纯文本，没有 UI 可截；若要做图，用终端渲染的闸门报告截图即可，别伪造界面。
-7. **CI**：无。建议加一个只跑 `npm test && npm run roster:check` 的 workflow，防名册与代码漂移。
-8. **类型**：纯 JS，无 `.d.ts`。若插件被别的插件 import（`exports` 已开 `./experts`、`./dispatch` 等），建议补 JSDoc→`tsc --checkJs`。
-
-## 四、已知限制（写进文档即可，不算 bug）
-
-9. **名册硬编码**：19 位专家写在 `lib/experts.js`，用户增删要改代码 + 跑 `render-roster.mjs` + 重启；运行时不可配置。
-10. **只读会话写盘失败只报错**，不自动降级为「输出到对话」——这是有意的（只读就是只读）。
-11. **仅在 macOS + Node 22.22.3 + DSH 0.2.1-rc.2 验证过**；Windows 路径分隔符（`assertSafeRelative` 已处理 `\`）与 Linux 未实测。
-12. **不自动派活**：插件只做闸门/名册/落盘，真正派发仍靠 Agent Teams 或 subagent；`spawn_teammate` 链路未做集成测试。
-13. **技能可被项目级同名技能覆盖**（优先级 250 < project 100/200）：正文可被盖，工具不会被盖——已写入 README「技能加载优先级」。
-
-## 五、发布步骤（照做即可）
+## 四、发布步骤
 
 ```bash
 cd ~/.dsh/local-plugins/dsh-commander
-# 1) 改名（三处同步）后确认
-npm run roster:check && npm test
-# 2) 官源登录
+# 1) 改包名（三处）+ 替换四处仓库地址
+pnpm run check
+# 2) 官源登录（本机 ~/.npmrc 指向 npmmirror 时 npm whoami 会 401）
 npm login --registry=https://registry.npmjs.org
 # 3) 看清单
 npm pack --dry-run
@@ -63,3 +65,12 @@ npm publish --tag next
 dsh plugin --profile web add <新包名>@next
 DSH_COMMANDER_TRACE=1 dsh --profile web --port 8100 --no-open
 ```
+
+## 五、已知限制（写进 README 即可，不算 bug）
+
+- 名册 19 位硬编码在 `lib/experts.js`，增删要改代码 + `pnpm run roster` + 重启。
+- 只读会话下写盘会被沙箱拒绝并返回错误，不自动降级为「输出到对话」（有意）。
+- 仅在 macOS + Node 22.22.3 + DSH 0.2.1-rc.2 实测；Linux/Windows 未测（`assertSafeRelative` 已处理 `\`）。
+- 插件不自动派活，`spawn_teammate` 链路未做集成测试。
+- 技能可被项目级同名技能覆盖（优先级 250 < project 100/200）：正文可被盖，工具不会被盖。
+- README 为中文主文档 + English summary；如需完整英文版，欢迎按 CONTRIBUTING 提 PR（`README.en.md`）。
