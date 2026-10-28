@@ -251,7 +251,10 @@ dsh plugin --profile web remove dsh-commander
 **6. `brief` 说「对应多位专家」怎么办？**
 名册支持 slug / 全名 / 子串三级匹配，但**只在唯一命中时返回**。像 `expert` 这种碎片会命中 6 位，插件会让你写完整 slug，而不是随便挑一个。
 
-**7. 怎么加一位自己的专家？**
+**7. `DSH_COMMANDER_TRACE=1` 了却看不到那三行？**
+宿主在启动阶段会把 `logger.info` 过滤掉，插件作者的追踪因此可能「调了但没显示」。本插件的追踪直接写 `stderr`，所以 `DSH_COMMANDER_TRACE=1 dsh ... 2>&1 | grep dsh-commander` 一定看得到；不设这个变量时一行都不输出。
+
+**8. 怎么加一位自己的专家？**
 改 `lib/experts.js` 增一条（六项要求 + 交接 + 扣分）→ `node scripts/render-roster.mjs` → `npm test` → 重启。闸门会自动认这个新 slug。
 
 ## 兼容性
