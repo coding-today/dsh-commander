@@ -19,12 +19,12 @@
 
 ## What this is
 
-A DeepSeek Harness plugin that installs the _commander_ discipline for multi-expert work into the host itself, instead of leaving it in a document someone has to remember.
+A DeepSeek Harness plugin that installs the _commander_ discipline for multi-expert work into the host itself — present from the first step of every session.
 
 After installing you get five things:
 
 - **An always-on charter** (~1.7k chars) injected into the system prompt — present in every session
-- **A playbook skill** (`commander`, ~84.7k chars) with the roster, the seven-phase workflow and field lessons
+- **A playbook skill** (`commander`, ~84.9k chars) with the roster, the seven-phase workflow and field lessons
 - **A 19-expert roster** where every expert carries seven requirements (when to summon / what you must provide / what they must return / acceptance criteria / forbidden moves / penalties / handoff)
 - **Five tools** — pre-dispatch gate, roster lookup, expert handoff, expert scoreboard, lessons ledger
 - **A sidebar panel** — what every expert is doing right now, refreshed every 3 seconds
