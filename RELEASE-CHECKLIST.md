@@ -38,12 +38,12 @@
 ## 三、npm 发布阻断项（必须处理）
 
 1. **包名冲突**：npm 上 `dsh-commander` 已被 `yusi5587` 占用（v0.1.4，2026-08-19）。
-   - 方案：`@yuxianglin/dsh-commander`（作者 scope 推定，**归属未验证**）。
+   - 方案：`@coding-today/dsh-commander`（实测 GitHub 账号 `coding-today`；npm 上该 scope 是否为你所有，`npm login` 后 `npm whoami` 验证）。
    - 改名三处同步：`package.json.name`、`cordis.patch.yml` 的 `id`/`name`、README 安装命令 + 徽章链接。
    - 备选：`dsh-cmdr`、`dsh-commander-plugin`、`dsh-discipline`（`dsh-crew` 已占）。
 
 2. **仓库地址是占位**：`package.json` 的 `repository` / `homepage` / `bugs` 与 README 的 CI 徽章都指向
-   `https://github.com/yuxianglin/dsh-commander`。建仓库后如果用户名不同，**四处一起替换**，否则徽章 404、npm 的 `repository` 也会指错。
+   `https://github.com/coding-today/dsh-commander`。建仓库后如果用户名不同，**四处一起替换**，否则徽章 404、npm 的 `repository` 也会指错。
 
 3. **依赖双份（结构性取舍）**：宿主的 peer 在 profile 内解析不到，插件只能把 `@deepseek-ai/dsh-tools` 放进 `dependencies` 并精确钉 `0.2.1-rc.2`。
    - 后果：宿主与插件各持一份 `defineTool`，若上游加严 `instanceof` 检查会分裂。

@@ -75,11 +75,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yuxianglin/dsh-commander.git"
+    "url": "https://github.com/coding-today/dsh-commander.git"
   },
-  "homepage": "https://github.com/yuxianglin/dsh-commander#readme",
+  "homepage": "https://github.com/coding-today/dsh-commander#readme",
   "bugs": {
-    "url": "https://github.com/yuxianglin/dsh-commander/issues"
+    "url": "https://github.com/coding-today/dsh-commander/issues"
   },
   "packageManager": "pnpm@9.15.0"
 }

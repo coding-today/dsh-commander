@@ -7,7 +7,7 @@
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#兼容性)
 [![DSH through 0.2.1-rc.2](https://img.shields.io/badge/DSH-up%20to%200.2.1--rc.2-2563eb.svg)](#兼容性)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![ci](https://github.com/yuxianglin/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/yuxianglin/dsh-commander/actions/workflows/ci.yml)
+[![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![state: local plugin](https://img.shields.io/badge/state-local%20plugin-lightgrey.svg)](#兼容性)
 
@@ -268,7 +268,7 @@ dsh plugin --profile web remove dsh-commander
 
 发布前要做三件事，缺一件会被 npm 或用户撞上：
 
-1. **换名字**：`dsh-commander` 在 npm 上已属他人（`yusi5587`，v0.1.4）。用带 scope 的名字，例如 `@yuxianglin/dsh-commander`；改名要同步 `cordis.patch.yml` 的 `id` / `name` 与 `package.json`。
+1. **换名字**：`dsh-commander` 在 npm 上已属他人（`yusi5587`，v0.1.4）。用带 scope 的名字，例如 `@coding-today/dsh-commander`；改名要同步 `cordis.patch.yml` 的 `id` / `name` 与 `package.json`。
 2. **官方源登录**：本机 `~/.npmrc` 指向 npmmirror 时 `npm whoami` 会 401；发布前 `npm login --registry=https://registry.npmjs.org`。
 3. **首发用 rc tag**：`npm publish --tag next`，别直接顶 `latest`。
 
