@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Windows 是 issue #1 的现场平台，必须有一条真跑的流水线，而不是靠「预期可用」。
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 

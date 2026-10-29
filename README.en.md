@@ -7,7 +7,7 @@
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#compatibility)
 [![DSH tested on 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#compatibility)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-81%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-114%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -23,8 +23,8 @@ A DeepSeek Harness plugin that installs the _commander_ discipline for multi-exp
 
 After installing you get five things:
 
-- **An always-on charter** (~1.7k chars) injected into the system prompt — present in every session
-- **A playbook skill** (`commander`, ~84.9k chars) with the roster, the seven-phase workflow and field lessons
+- **An always-on charter** (~2.3k chars) injected into the system prompt — present in every session
+- **A playbook skill** (`commander`, ~86.0k chars) with the roster, the seven-phase workflow and field lessons
 - **A 19-expert roster** where every expert carries seven requirements (when to summon / what you must provide / what they must return / acceptance criteria / forbidden moves / penalties / handoff)
 - **Five tools** — pre-dispatch gate, roster lookup, expert handoff, expert scoreboard, lessons ledger
 - **A sidebar panel** — what every expert is doing right now, refreshed every 3 seconds
@@ -264,11 +264,11 @@ writes traces straight to stderr. Make sure your command has `2>&1 | grep dsh-co
 
 ## Compatibility
 
-| Item             | Version                                                         |
-| ---------------- | --------------------------------------------------------------- |
-| DeepSeek Harness | Tested on **0.2.1-rc.2**; `engines.dsh` requires `>=0.2.1-rc.2` |
-| Node.js          | `>=22.19.0` (CI runs 22.22.3)                                   |
-| Platform         | macOS tested; Linux expected to work; Windows untested          |
+| Item             | Version                                                                                                                                                                                        |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DeepSeek Harness | Tested on **0.2.1-rc.2**; `engines.dsh` requires `>=0.2.1-rc.2`                                                                                                                                |
+| Node.js          | `>=22.19.0` (CI runs 22.22.3)                                                                                                                                                                  |
+| Platform         | macOS tested; Linux and Windows covered by CI (Windows runs lint → format → roster → examples → test → pack); the Windows 0.2.1-rc.3 desktop report (issue #1) awaits reporter re-verification |
 
 > `engines.dsh` has no upper bound: passing the gate is not the same as being tested. After a host major
 > upgrade, re-run `node scripts/check.mjs` and confirm one real mount with `DSH_COMMANDER_TRACE=1`.

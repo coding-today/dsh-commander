@@ -43,16 +43,22 @@
   导致启动报 `dsh: startup failed: 1 required plugin did not activate`、所有面板空白。
   本地实测：修复前 profile 里会多出 `cosmokit / dsh-brand / dsh-tools / dsh-util-values / schemastery`
   五个实体目录，修复后一个都没有。
+- **CI 增加 `windows-latest` 矩阵**（与 `ubuntu-latest` 并列跑 lint → format → roster → examples → test → pack）：
+  Windows 从「预期可用」变成有流水线证据；README 中英双语的平台行同步改写。
+- 文档数字与实测对齐：测试 114 个用例（原徽章 81、`AGENTS.md` 43、发布清单 71/71）、
+  常驻纪律段约 2.3k 字符（原 1.7k / 1.8k）、技能约 86.0k 字符（原 84.9k）。
 
 ### Fixed
 
+- `scripts/check.mjs` 在 Windows 上会第一步就 `ENOENT`：`npx` 实际是 `npx.cmd`，而 Node 的
+  `spawnSync` 不按 PATHEXT 解析。改为仅在 `win32` 经平台 shell 执行，POSIX 保持直连（不引入引号问题）。
 - 新增 `test/package.test.mjs` 守卫：`dependencies` / `optionalDependencies` 里不许出现 `@deepseek-ai/*`、
   `lib/` 里 import 的宿主包必须在 `peerDependencies`、`dsh.client.inject` 的条目也要声明 peer、
   peer 范围必须跟随宿主（不许精确锁版本）、`engines` 保持范围式。
 - README 新增 FAQ 第 10 条：启动失败的成因与两种恢复办法（删副本 / 用崩溃弹窗第三个按钮）。
 
 首个可运行版本已就绪，尚未发布到 npm。发布前需要处理的事项见
-[RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址、依赖双份取舍）。
+[RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址）。
 
 ## [0.1.0-rc.1] - 2026-10-29
 
@@ -60,9 +66,9 @@
 
 ### Added
 
-- **技能注册**：`assets/commander.md`（约 84.9k 字符）在运行时注册为 `commander` 技能，
+- **技能注册**：`assets/commander.md`（约 86.0k 字符）在运行时注册为 `commander` 技能，
   随插件版本走，不受用户目录里旧同名技能影响。
-- **常驻纪律段**：`buildCharter()` 生成约 1.8k 字符的系统提示段落，每个会话都在场，
+- **常驻纪律段**：`buildCharter()` 生成约 2.3k 字符的系统提示段落，每个会话都在场，
   含派发闸门 5 条、专家召集纪律 4 条、通信纪律 3 条、裁决纪律 6 条、记忆与留痕 4 条、工具速查 5 条。
 - **五个工具**：
   - `commander_dispatch_check`：派发前闸门，7 个阻断码（`D1_no_assignee`、`D2_no_acceptance`、

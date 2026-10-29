@@ -7,7 +7,7 @@
 [![DSH Plugin](https://img.shields.io/badge/DSH-Plugin-0f766e.svg)](#兼容性)
 [![DSH through 0.2.1-rc.2](https://img.shields.io/badge/DSH-tested%20on%200.2.1--rc.2-2563eb.svg)](#兼容性)
 [![Node.js ≥22.19](https://img.shields.io/badge/Node.js-%E2%89%A522.19-339933.svg)](https://nodejs.org/)
-[![tests](https://img.shields.io/badge/tests-81%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-114%20passing-3fb950.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![ci](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-today/dsh-commander/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -23,8 +23,8 @@
 
 装完之后，你的 DSH 里会多出五样东西：
 
-- **一段常驻纪律**（约 1.7k 字符，注入 system prompt，每个会话都在场）
-- **一份作战手册**（`commander` 技能，约 84.9k 字符，含名册、7 阶段工作流、实战教训）
+- **一段常驻纪律**（约 2.3k 字符，注入 system prompt，每个会话都在场）
+- **一份作战手册**（`commander` 技能，约 86.0k 字符，含名册、7 阶段工作流、实战教训）
 - **19 位带要求的专家**（何时召唤 / 必须给到什么 / 必须交回 / 验收判据 / 禁止动作 / 扣分项 / 交接）
 - **五个工具**（派发闸门、专家名册、专家交接、记分牌、经验台账）
 - **一块侧边栏面板**（每位专家此刻在干什么，3 秒一刷）
@@ -299,7 +299,7 @@ rm -rf ~/.dsh/profiles/<profile>/node_modules/@deepseek-ai/dsh-tools
 | --- | --- |
 | DeepSeek Harness | 已在 **0.2.1-rc.2 / 0.2.1-rc.3** 实测；`engines.dsh` 要求 `>=0.2.1-rc.2` |
 | Node.js | `>=22.19.0`（CI 用 22.22.3） |
-| 平台 | macOS 实测；Linux 预期可用；Windows 有现场报告（issue #1，rc.3），修复后待复验 |
+| 平台 | macOS 实测；Linux / Windows 已进 CI 矩阵（Windows 跑 lint → format → roster → examples → test → pack）；Windows 0.2.1-rc.3 桌面端现场（issue #1）修复后待报告者复验 |
 
 > `engines.dsh` 没有上界：能过闸不等于已测试。宿主大版本升级后请重跑 `node scripts/check.mjs`，
 > 再用 `DSH_COMMANDER_TRACE=1` 做一次真机挂载确认。
@@ -325,7 +325,7 @@ dsh-commander/
 │   └── workspace.js    # 路径白名单 + 走宿主 fs 的读写（含 plans 目录列举）
 ├── assets/commander.md # 技能正文（末尾名册附录是生成物）
 ├── scripts/            # 名册生成、示例重生成、CLI、截图渲染、一条命令检查
-├── test/               # 109 个用例（node --test，含真机 fs 契约）
+├── test/               # 114 个用例（node --test，含真机 fs 契约）
 ├── examples/           # 可运行的批次与真实闸门输出
 ├── docs/screenshots/   # README 截图与其真实输出源文本
 ├── .github/            # CI、issue / PR 模板

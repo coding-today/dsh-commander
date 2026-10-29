@@ -9,6 +9,11 @@
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 
+// On Windows `npx` is `npx.cmd` and Node does not apply PATHEXT when spawning,
+// so a bare `spawnSync('npx', ...)` fails with ENOENT. Going through the platform
+// shell fixes that; POSIX keeps spawning directly so no quoting is introduced.
+const USE_SHELL = process.platform === 'win32';
+
 const STEPS = [
 	{ label: 'lint', command: 'npx', args: ['--no-install', 'eslint', '.'] },
 	{ label: 'format', command: 'npx', args: ['--no-install', 'prettier', '--check', '.'] },
@@ -19,7 +24,7 @@ const STEPS = [
 
 for (const step of STEPS) {
 	process.stdout.write(`\n▶ ${step.label}\n`);
-	const result = spawnSync(step.command, step.args, { stdio: 'inherit' });
+	const result = spawnSync(step.command, step.args, { stdio: 'inherit', shell: USE_SHELL });
 	if (result.status !== 0) {
 		process.stderr.write(`\n✗ ${step.label} 失败（exit ${result.status ?? 'signal'}）\n`);
 		process.exit(result.status ?? 1);

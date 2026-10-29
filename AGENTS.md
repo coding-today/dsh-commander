@@ -16,7 +16,7 @@
 ## 改完必须跑
 
 ```bash
-pnpm run check      # lint + format:check + roster:check + test（43 个用例）
+pnpm run check      # lint + format:check + roster:check + test（114 个用例）
 ```
 
 真机验证（可选，但改动了注册逻辑就要做）：

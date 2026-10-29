@@ -9,7 +9,7 @@
 
 | 项 | 证据 |
 | --- | --- |
-| 单元与集成测试 | `node --test test/*.test.mjs` → **71/71 通过** |
+| 单元与集成测试 | `node --test test/*.test.mjs` → **114/114 通过** |
 | 静态检查 | `npx eslint .` → 0 问题；`npx prettier --check .` → `All matched files use Prettier code style!` |
 | 名册与技能附录同步 | `node scripts/render-roster.mjs --check` → `roster appendix is up to date` |
 | 一条命令跑全 | `pnpm run check`（lint + format:check + roster:check + test） |
