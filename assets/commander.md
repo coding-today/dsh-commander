@@ -44,6 +44,8 @@ whenToUse: 需要多个角色（产品/架构/前端/测试/审查/运营）专�
 
 **机制**：建记分牌文件 `.agent/plans/<task>-expert-scoreboard.md`，每位专家起始 **100 分**；每笔加减分即时落档「谁 / 何时 / 为何 / ±分」，任务结束复核后向用户通报**每位专家总分与排名**。
 
+**闭环**：`adjust` 只负责记账，**`evolve` 才让下一轮不一样**——下一轮派发前聚合全部历史生成 `.agent/plans/expert-evolution.md`，把每位专家的历史失分原样写进新任务书的「扣分项」，并按分数给出派发档位（≥90 正常 / 70–89 加严验收 / 50–69 加严 + 二次复核 / <50 降级）。不做这一步，分数只是账本。
+
 **扣分（每次违规，重复犯同类错误加倍）**：
 
 | 违规 | 扣分 |
@@ -591,15 +593,31 @@ PY
 
 要免去手工粘贴，加 `"deliver": true, "toMember": "<团队成员名|captain>"`：插件调用宿主的 `agent_teams_send_message` 把这段正文直接投进对方收件箱，回执里给出 `live / wake / mailbox / duplicate`。**`from` 由宿主按调用者身份认定，插件与模型都不能冒充专家署名**；会话里没有团队时工具会明确拒绝并提示改走粘贴。
 
-### 4. 专家记分牌 · `commander_scoreboard`
+### 4. 记分牌 · `commander_scoreboard`（指挥官 + 专家）
 
 ```json
 {"action": "init",   "task": "退款状态机", "experts": [{"name": "backend", "role": "后端"}, {"name": "reviewer", "role": "审查"}]}
 {"action": "adjust", "task": "退款状态机", "adjustments": [{"expert": "backend", "delta": -25, "reason": "未复跑就宣称全绿，实际 2 条红"}]}
+{"action": "adjust", "task": "退款状态机", "adjustments": [{"expert": "captain", "delta": -10, "reason": "验收条件写成「做完告诉我」，不可机械判定"}]}
 {"action": "show",   "task": "退款状态机"}
+{"action": "evolve"}
 ```
 
 落盘 `<workspace>/.agent/plans/<task>-expert-scoreboard.md`。规则不变：起始 100、加减分必写理由、以磁盘证据为准。**口头表扬与口头扣分都不算，写进这个文件才算。**
+
+**牌上有两方，不是一方。** `init` 自动在最前面写 `captain`（指挥官）行；`adjust` 的 `expert` 写 `captain` / `指挥官` / `commander` 都是给你自己记分。你派错的账要记在自己名下：验收不可机械判定、漏 `dependsOn`、写者撞车、把线索当结论发布——每一条都扣自己的分。**只给专家打分的记分牌，等于指挥官永远不进化**；专家看到你敢认账，才会愿意说「这里有问题」。
+
+**记分牌是为了进化，不是为了记账。** 每轮收尾 `adjust` 之后，下一轮派发前跑一次 `evolve`（不需要 `task`）：
+它只读聚合 `<plansDir>/*-expert-scoreboard.md`，写出 `<plansDir>/expert-evolution.md`——
+
+- 卡是四段：**下轮必读（派发前 30 秒）** → **`## captain，指挥官`** → 每位专家一段 → **下一轮派发指令**表格
+  （`| 角色 | 档位 | 必写进任务书 |`，直接抄进任务书，不是看过就算）；
+- 分数**不跨任务相加**（每张牌独立从 100 起），取最近一张牌的当前分 + 全部历史理由；
+- 每条历史失分**原样抄进**对应任务书的「扣分项 / 禁止动作」，同一理由复发会标 `×N 复发`——
+  复发 ≥ 2 次说明你上一轮的纠正没生效，**指挥官自己也要在台账记一条 failure**；你自己的派发错误复发 ≥ 2 次，
+  这一条升为硬闸门：**下次派发前必跑 `commander_dispatch_check`**；
+- 分数决定**派发档位**，不是参考值：≥90 正常派发｜70–89 加严验收｜50–69 加严 + 二次复核｜<50 降级只派 research·doc；
+- 不做这一步，记分牌就退化成一张漂亮的账本：分数年年扣，专家年年犯同一个错。
 
 ### 5. 经验台账 · `commander_ledger`
 

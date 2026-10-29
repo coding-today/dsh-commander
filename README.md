@@ -101,8 +101,9 @@ DSH_COMMANDER_TRACE=1 dsh --profile web --no-open 2>&1 | grep dsh-commander
 2. 派活前调 commander_dispatch_check     → 被拦就补 assignee / acceptance / dependsOn
 3. 派活前调 commander_expert brief <slug> → 把七节要求抄进任务书
 4. 换人或交棒时调 commander_handoff      → 交接单落到 .agent/plans/handoffs/
-5. 完成后调 commander_scoreboard adjust  → 落盘加减分与理由
-6. 收尾调 commander_ledger               → 把有效做法与踩坑写进台账
+5. 完成后调 commander_scoreboard adjust  → 落盘加减分与理由（专家 + 指挥官自己各看一遍）
+6. 下一轮派活前调 commander_scoreboard evolve → 生成 expert-evolution.md（指挥官 + 专家两段），把失分项写进新任务书
+7. 收尾调 commander_ledger               → 把有效做法与踩坑写进台账
 ```
 
 ### 不装插件也能验
@@ -150,10 +151,31 @@ node scripts/commander-cli.mjs experts quality
 `agent_teams_send_message` 把正文直接投进对方收件箱，回执给出 `live / wake / mailbox / duplicate`。
 **`from` 由宿主按调用者身份认定**，插件与模型都不能冒充专家署名；会话里没有团队时工具会明确拒绝。
 
-### `commander_scoreboard` — 专家记分牌
+### `commander_scoreboard` — 记分牌（指挥官 + 专家）
 
-`init`（建牌，需 `task` + `experts`）｜`adjust`（加减分，必须写理由）｜`show`（读取）。
+`init`（建牌，需 `task` + `experts`）｜`adjust`（加减分，必须写理由）｜`show`（读取）｜`evolve`（聚合历史，生成进化卡）。
 落盘：`.agent/plans/<task>-expert-scoreboard.md`。起始 100 分，单次增减绝对值 ≤ 100，累计不钳制。
+
+**牌上有两方**：`init` 自动在最前面写入 `captain`（指挥官）行；`adjust` 的 `expert` 写
+`captain` / `指挥官` / `commander` 都是给指挥官自己记分。指挥官派错了——验收不可机械判定、漏了
+`dependsOn`、写者撞车、把线索当结论——照样扣分。只给专家打分的记分牌，等于指挥官永远不进化。
+
+`evolve` 不带 `task`，只读扫描 `<plansDir>/*-expert-scoreboard.md`，把全部历史汇总成
+`.agent/plans/expert-evolution.md`，结构是四段：
+
+1. **下轮必读（派发前 30 秒）**：指挥官最近一次自身失误 + 每个非「正常派发」档专家的必写扣分项；
+2. **`## captain，指挥官`**：分数、本轮派发纪律、自身失误（原样抄进新任务书开头「我不要重复」）、做对的地方；
+3. **每个专家一段**：分数档位 + 历史失分 + 可复用做法；
+4. **下一轮派发指令**：`| 角色 | 档位 | 必写进任务书 |` 表格——直接抄进任务书，不是看过就算。
+
+**记分牌不是账本**——它的目的是让下一轮派发与上一轮不同：
+
+- 分数不跨任务相加（每张牌独立从 100 起），取「最近一张牌的当前分」+ 完整理由历史；
+- 每条历史失分原样写进该专家下一份任务书的「扣分项 / 禁止动作」，同一理由复发 ≥ 2 次会标 `×N 复发`，
+  指挥官同时要在台账记一条 failure（纠正是指挥官的责任，不只是专家的）；
+- 指挥官的同一派发错误复发 ≥ 2 次会升为硬闸门：派发前必跑 `commander_dispatch_check`；
+- 分数决定派发档位，不是参考值：**≥90 正常派发｜70–89 加严验收｜50–69 加严 + 二次复核｜<50 降级只派 research·doc**；
+- 坏文件、非记分牌文件只跳过并上报，不影响其余聚合；还没有任何牌时也照样写卡，说明「下一轮才有东西可进化」。
 
 ### `commander_ledger` — 经验台账
 
@@ -276,14 +298,14 @@ dsh-commander/
 │   ├── experts.js      # 19 位专家与七节要求（单一来源）
 │   ├── handoff.js      # 交接单的生成与消息正文
 │   ├── dispatch.js     # 派发闸门（纯函数）
-│   ├── scoreboard.js   # 记分牌 Markdown 生成与解析
+│   ├── scoreboard.js   # 记分牌生成/解析 + 指挥官/专家进化卡聚合
 │   ├── ledger.js       # 台账插入、归档
 │   ├── monitor.js      # 只读聚合团队状态，供侧边栏轮询
 │   ├── client.js       # Web 侧边栏「专家」面板
-│   └── workspace.js    # 路径白名单 + 走宿主 fs 的读写
+│   └── workspace.js    # 路径白名单 + 走宿主 fs 的读写（含 plans 目录列举）
 ├── assets/commander.md # 技能正文（末尾名册附录是生成物）
 ├── scripts/            # 名册生成、示例重生成、CLI、截图渲染、一条命令检查
-├── test/               # 81 个用例（node --test）
+├── test/               # 109 个用例（node --test，含真机 fs 契约）
 ├── examples/           # 可运行的批次与真实闸门输出
 ├── docs/screenshots/   # README 截图与其真实输出源文本
 ├── .github/            # CI、issue / PR 模板
@@ -298,6 +320,11 @@ pnpm run check      # lint → format → roster → examples → test（CI 跑�
 pnpm run roster     # 改完 lib/experts.js 后重生成技能里的名册附录
 pnpm run screenshots # 改完 docs/screenshots/src/*.txt 后重渲染截图
 ```
+
+`pnpm test` 里除桩测试外还有 `test/live-fs.test.mjs`：它直接从本机 DSH 安装里加载**真实的
+`@deepseek-ai/dsh-fs-local`**，验证 `lstat` 对不存在的路径返回 `undefined`、`listDir` 对不存在的目录抛
+`FS_NOT_FOUND`、目录项 `type` 是否 `file`——`evolve` 的正确性就压在这三条契约上。找不到 DSH 安装
+（或设了别的 `DSH_HOME`）时该文件**跳过而不是失败**。
 
 规范见 [CONTRIBUTING.md](./CONTRIBUTING.md)：代码与 JSDoc 用英文，用户可见文案用中文；
 不变量（改代码前必须知道的六条）见 [AGENTS.md](./AGENTS.md)；安全报告方式见 [SECURITY.md](./SECURITY.md)。

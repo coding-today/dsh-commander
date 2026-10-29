@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { assertSafeRelative, fileSystemOf } from '../lib/workspace.js';
+import { assertSafeRelative, fileSystemOf, listPlansFiles } from '../lib/workspace.js';
 
 test('accepts workspace-relative paths and normalizes separators', () => {
 	assert.equal(assertSafeRelative('.agent/plans', 'plansDir'), '.agent/plans');
@@ -31,4 +31,23 @@ test('fileSystemOf explains a missing fs service instead of throwing a TypeError
 
 	assert.throws(() => fileSystemOf({ get: () => undefined }), /没有文件服务/);
 	assert.throws(() => fileSystemOf({ get: () => undefined }), /dsh-commander:/);
+});
+
+test('listPlansFiles treats an absent directory as empty and a missing listDir as an error', async () => {
+	const base = { processPath: (target) => target.targetKey };
+	assert.deepEqual(
+		await listPlansFiles({ ...base, lstat: async () => undefined, listDir: async () => [] }, {}, undefined),
+		[]
+	);
+	await assert.rejects(
+		async () => listPlansFiles({ ...base, lstat: async () => ({ type: 'directory' }) }, {}, undefined),
+		/没有 listDir/
+	);
+	const entries = [
+		{ name: 'a-expert-scoreboard.md', type: 'file' },
+		{ name: 'handoffs', type: 'directory' },
+		{ name: 'socket', type: 'other' }
+	];
+	const fs = { ...base, lstat: async () => ({ type: 'directory' }), listDir: async () => entries };
+	assert.deepEqual(await listPlansFiles(fs, {}, undefined), ['a-expert-scoreboard.md']);
 });

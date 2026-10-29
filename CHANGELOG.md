@@ -7,10 +7,35 @@
 
 ### Added
 
-- **侧边栏「专家」面板**：`GET /ext/commander/state` 只读快照 + Web 客户端 tab，
+- **记分牌进化闭环**：`commander_scoreboard` 新增 `evolve`（不需要 `task`），只读聚合
+  `<plansDir>/*-expert-scoreboard.md`，写入 `<plansDir>/expert-evolution.md`。分数不跨任务相加，
+  取最近一张牌的当前分 + 完整理由历史；每条历史失分原样写进该专家下一份任务书，同一理由复发
+  标 `×N 复发`，并按分数给出派发档位（≥90 / 70–89 / 50–69 / <50）。坏文件与无关文件只跳过上报。
+- `lib/scoreboard.js` 新增 `bandFor` / `aggregateExperts` / `formatEvolution` 与 `EVOLUTION_BANDS`；
+  `lib/workspace.js` 新增 `resolvePlansDirectory` / `listPlansFiles`（目录不存在视为空，后端没有 `listDir` 则明确报错而不是假装「没有历史」）。
+- 新增 `test/live-fs.test.mjs`：从本机 DSH 安装加载真实的 `@deepseek-ai/dsh-fs-local`，验证
+  `lstat` / `listDir` / 目录项 `type` 三条契约；找不到安装时跳过而不是失败。
+- 常驻纪律段新增两条：记分牌为进化服务（收尾 `adjust`、下轮派发前 `evolve`、复发 ≥2 次要记 failure）；
+  分数决定派发档位，不是参考值。
+- 侧边栏「专家」面板：`GET /ext/commander/state` 只读快照 + Web 客户端 tab，
   每 3 秒展示每位专家的状态、当前任务、最近一条消息；`monitor: false` 可关闭。
 - 服务端 `lib/monitor.js`：解析 `<workspace>/.agent-teams/*/team.json` 与 `inbox/*.jsonl`，
   成员判活优先看团队记录，其次看是否压着未完成任务；坏 JSONL 行跳过而不是整块失败。
+
+### Added（续）
+
+- **指挥官也上牌**：`commander_scoreboard init` 自动写入 `captain` 行（角色 `指挥官`）；`adjust` 的
+  `expert` 接受 `captain` / `指挥官` / `commander` 三个别名。指挥官的派发失误（验收不可机械判定、
+  漏 `dependsOn`、写者撞车、把线索当结论）现在和专家一样计分。
+- 进化卡改为**两方**：新增 `## captain，指挥官` 段（分数、派发纪律、自身失误、做对的地方）、
+  顶部「下轮必读（派发前 30 秒）」、末尾「下一轮派发指令」表格（`| 角色 | 档位 | 必写进任务书 |`，
+  可直接抄进任务书）；同一派发错误复发 ≥ 2 次升级为硬闸门（派发前必跑 `commander_dispatch_check`）。
+- `lib/scoreboard.js` 新增 `CAPTAIN` / `CAPTAIN_ROLE` / `isCaptain` / `normalizeName` / `formatDirectives`；
+  `parseScoreboard` 归一化三个别名并合并重复的指挥官行（手改过的牌不会变成两个分数）。
+
+### Changed
+
+- `commander_scoreboard` 的 `task` 不再全局必填：只有 `init` / `adjust` / `show` 需要，缺失时报明确中文错误。
 
 首个可运行版本已就绪，尚未发布到 npm。发布前需要处理的事项见
 [RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址、依赖双份取舍）。

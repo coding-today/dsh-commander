@@ -1,5 +1,14 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -18,7 +27,19 @@ function makeFs(root) {
 		},
 		processPath: (target) => target.targetKey,
 		async lstat(target) {
-			return existsSync(target) ? { type: 'file' } : undefined;
+			if (!existsSync(target)) return undefined;
+			return { type: statSync(target).isDirectory() ? 'directory' : 'file' };
+		},
+		async listDir(target) {
+			const names = readdirSync(target.targetKey);
+			return names.map((name) => {
+				const absolute = path.join(target.targetKey, name);
+				return {
+					name,
+					type: statSync(absolute).isDirectory() ? 'directory' : 'file',
+					target: { targetKey: absolute, displayPath: path.relative(root, absolute) }
+				};
+			});
 		},
 		async readText(target) {
 			return readFileSync(target.targetKey, 'utf8');
@@ -626,6 +647,157 @@ test('monitor can be switched off', () => {
 		};
 		plugin.apply(ctx, { monitor: false });
 		assert.equal(touched, false);
+	} finally {
+		cleanup();
+	}
+});
+
+test('evolve aggregates every scoreboard into an evolution card', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		const exec = makeExec(root);
+		const tool = tools.get('commander_scoreboard');
+
+		await tool.execute({ action: 'init', task: '退款 状态机', experts: ['backend', 'reviewer'] }, exec);
+		await tool.execute(
+			{
+				action: 'adjust',
+				task: '退款 状态机',
+				adjustments: [{ expert: 'backend', delta: -20, reason: '验收条件缺失' }]
+			},
+			exec
+		);
+		await tool.execute({ action: 'init', task: '对账 报表', experts: ['backend'] }, exec);
+		// Same penalty on the later board too: the score must not depend on which
+		// board happened to be written last (both land in the same millisecond).
+		await tool.execute(
+			{
+				action: 'adjust',
+				task: '对账 报表',
+				adjustments: [{ expert: 'backend', delta: -20, reason: '验收条件缺失' }]
+			},
+			exec
+		);
+
+		// A non-scoreboard file and a corrupted one must not break the aggregation.
+		const plans = path.join(root, '.agent', 'plans');
+		writeFileSync(path.join(plans, 'notes.md'), '# 无关文件\n', 'utf8');
+		writeFileSync(path.join(plans, 'broken-expert-scoreboard.md'), '# 被手改坏\n', 'utf8');
+
+		const result = await tool.execute({ action: 'evolve' }, exec);
+		const card = path.join(plans, 'expert-evolution.md');
+		assert.ok(existsSync(card), 'evolution card should exist');
+		assert.match(result.text, /已生成进化卡/);
+		assert.match(result.text, /聚合 2 张记分牌/);
+		assert.match(result.text, /broken-expert-scoreboard\.md/);
+
+		const text = readFileSync(card, 'utf8');
+		// 100 - 20 = 80 on both boards → 「加严验收」, and the reason repeats.
+		assert.match(text, /## backend —— 80 分（加严验收）/);
+		assert.match(text, /验收条件缺失/);
+		assert.match(text, /×2 复发/);
+		assert.match(text, /上一轮纠正没生效/);
+		// The evolution card is derived, never a scoreboard: it must not be
+		// re-ingested on the next run.
+		assert.doesNotMatch(text, /expert-evolution/);
+	} finally {
+		cleanup();
+	}
+});
+
+test('init writes the commander row and adjust accepts every alias for it', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		const exec = makeExec(root);
+		const tool = tools.get('commander_scoreboard');
+
+		const created = await tool.execute({ action: 'init', task: '退款 状态机', experts: ['backend'] }, exec);
+		assert.match(created.text, /\| captain \| 指挥官 \| 100 \|/);
+
+		const shown = await tool.execute(
+			{
+				action: 'adjust',
+				task: '退款 状态机',
+				adjustments: [
+					{ expert: '指挥官', delta: -10, reason: '验收不可机械判定' },
+					{ expert: 'commander', delta: -5, reason: '漏了 dependsOn' }
+				]
+			},
+			exec
+		);
+		assert.match(shown.text, /\| captain \| 指挥官 \| 85 \|/);
+		assert.match(shown.text, /验收不可机械判定/);
+		assert.match(shown.text, /漏了 dependsOn/);
+	} finally {
+		cleanup();
+	}
+});
+
+test('evolve separates the commander from the experts it dispatches', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		const exec = makeExec(root);
+		const tool = tools.get('commander_scoreboard');
+
+		await tool.execute({ action: 'init', task: '退款 状态机', experts: ['backend'] }, exec);
+		await tool.execute(
+			{
+				action: 'adjust',
+				task: '退款 状态机',
+				adjustments: [
+					{ expert: 'captain', delta: -12, reason: '派了无法机械判定的验收' },
+					{ expert: 'backend', delta: -40, reason: '没复跑就说全绿' }
+				]
+			},
+			exec
+		);
+
+		const result = await tool.execute({ action: 'evolve' }, exec);
+		assert.match(result.text, /聚合 1 张记分牌/);
+
+		const text = readFileSync(path.join(root, '.agent', 'plans', 'expert-evolution.md'), 'utf8');
+		assert.match(text, /^# 指挥官 \+ 专家进化卡$/m);
+		assert.match(text, /^## captain，指挥官 —— 88 分（加严验收）$/m);
+		assert.match(text, /自身失误（每份新任务书开头「我不要重复」一节原样抄）：/);
+		assert.match(text, /派了无法机械判定的验收/);
+		assert.match(text, /^## backend —— 60 分（加严 \+ 二次复核）$/m);
+		// The commander's own failure belongs to the dispatch orders, never to the
+		// backend task book.
+		assert.match(text, /\| captain（自己） \| 加严验收 \| 派了无法机械判定的验收 \|/);
+		assert.match(text, /\| backend \| 加严 \+ 二次复核 \| 没复跑就说全绿 \|/);
+	} finally {
+		cleanup();
+	}
+});
+
+test('evolve still writes a card when no scoreboard exists yet', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		const result = await tools.get('commander_scoreboard').execute({ action: 'evolve' }, makeExec(root));
+		assert.match(result.text, /聚合 0 张记分牌/);
+		assert.match(result.text, /还没有任何历史/);
+	} finally {
+		cleanup();
+	}
+});
+
+test('commander_scoreboard still demands a task for the per-task actions', async () => {
+	const { root, cleanup } = withRoot();
+	try {
+		const { ctx, tools } = makeCtx(root);
+		plugin.apply(ctx, {});
+		await assert.rejects(
+			() => tools.get('commander_scoreboard').execute({ action: 'show' }, makeExec(root)),
+			/需要 task/
+		);
 	} finally {
 		cleanup();
 	}

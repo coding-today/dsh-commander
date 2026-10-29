@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+	CAPTAIN,
+	CAPTAIN_ROLE,
 	START_SCORE,
 	applyAdjustments,
 	assertDelta,
@@ -12,14 +14,31 @@ import {
 	slugifyTask
 } from '../lib/scoreboard.js';
 
-test('new experts start at 100', () => {
+test('new experts start at 100 and the commander always has its own row', () => {
 	const board = createScoreboard({ task: '退款状态机', experts: ['backend', { name: 'reviewer', role: '审查' }] });
-	assert.equal(board.experts.length, 2);
+	assert.equal(board.experts.length, 3);
+	assert.deepEqual(
+		board.experts.map((expert) => expert.name),
+		[CAPTAIN, 'backend', 'reviewer']
+	);
 	assert.deepEqual(
 		board.experts.map((expert) => expert.score),
-		[START_SCORE, START_SCORE]
+		[START_SCORE, START_SCORE, START_SCORE]
 	);
-	assert.equal(board.experts[1].role, '审查');
+	assert.equal(board.experts[0].role, CAPTAIN_ROLE);
+	assert.equal(board.experts[2].role, '审查');
+});
+
+test('the commander cannot be smuggled in twice or renamed away', () => {
+	const board = createScoreboard({
+		task: 'x',
+		experts: ['captain', { name: '指挥官', role: '真的专家' }, 'backend']
+	});
+	assert.deepEqual(
+		board.experts.map((expert) => expert.name),
+		[CAPTAIN, 'backend']
+	);
+	assert.equal(board.experts[0].role, CAPTAIN_ROLE);
 });
 
 test('a scoreboard without experts is rejected', () => {
@@ -47,9 +66,12 @@ test('assertDelta keeps the sign band', () => {
 test('adjustments mutate a copy, not the input board', () => {
 	const board = createScoreboard({ task: 'x', experts: ['backend'] });
 	const next = applyAdjustments(board, [{ expert: 'backend', delta: -25, reason: '未复跑宣称全绿' }]);
-	assert.equal(board.experts[0].score, 100);
-	assert.equal(next.experts[0].score, 75);
-	assert.equal(next.experts[0].log.length, 1);
+	const original = board.experts.find((expert) => expert.name === 'backend');
+	const changed = next.experts.find((expert) => expert.name === 'backend');
+	assert.equal(original.score, 100);
+	assert.equal(changed.score, 75);
+	assert.equal(changed.log.length, 1);
+	assert.equal(next.experts.find((expert) => expert.name === CAPTAIN).score, 100);
 });
 
 test('format then parse round-trips score, role and log', () => {
@@ -65,12 +87,14 @@ test('format then parse round-trips score, role and log', () => {
 	);
 	const parsed = parseScoreboard(formatScoreboard(adjusted));
 	assert.equal(parsed.task, '退款 状态机');
-	assert.equal(parsed.experts.length, 2);
-	assert.equal(parsed.experts[0].score, 75);
-	assert.equal(parsed.experts[0].role, '后端 / 退款');
-	assert.equal(parsed.experts[0].log.length, 1);
-	assert.equal(parsed.experts[0].log[0].delta, -25);
-	assert.match(parsed.experts[0].log[0].reason, /2 条红/);
+	assert.equal(parsed.experts.length, 3);
+	const backend = parsed.experts.find((expert) => expert.name === 'backend');
+	assert.equal(backend.score, 75);
+	assert.equal(backend.role, '后端 / 退款');
+	assert.equal(backend.log.length, 1);
+	assert.equal(backend.log[0].delta, -25);
+	assert.match(backend.log[0].reason, /2 条红/);
+	assert.equal(parsed.experts[0].name, CAPTAIN);
 });
 
 test('parse rejects a file that is not a scoreboard', () => {
