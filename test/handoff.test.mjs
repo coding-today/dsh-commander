@@ -34,7 +34,15 @@ test('a handoff carries the target expert requirements', () => {
 	for (const item of bug.inputs) assert.ok(note.includes(item), `missing input: ${item}`);
 	assert.match(note, /对外结论由指挥官发布/);
 	assert.match(note, /停手 \+ 交证据/);
-	assert.match(note, /2026-10-29 10:20:30 \+08:00/);
+	// The stamp is the caller's local wall clock plus an explicit offset, so assert
+	// the shape and the instant — never a literal clock, which would fail on any
+	// other timezone (CI runs in UTC).
+	const stamp = note.match(/- 时间：(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2})/);
+	assert.ok(stamp !== null, 'handoff is missing a timestamp line');
+	assert.equal(
+		new Date(stamp[1].replace(' ', 'T').replace(' ', '')).getTime(),
+		new Date('2026-10-29T10:20:30+08:00').getTime()
+	);
 });
 
 test('a handoff without a conclusion is rejected', () => {
