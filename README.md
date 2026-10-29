@@ -276,16 +276,36 @@ curl -s http://127.0.0.1:<port>/ext/commander/state | jq .totals
 **9. 怎么加一位自己的专家？** 在 `lib/experts.js` 增一条（七节要求 + 扣分标尺 `-15/-20/-25/-40`）
 → `pnpm run roster` → `pnpm test` → 重启。闸门会自动认这个新 slug。
 
+**10. 装上插件后宿主起不来，报 `1 required plugin did not activate`？**
+`0.1.0-rc.1` 的 `dependencies` 里硬锁了 `@deepseek-ai/dsh-tools@0.2.1-rc.2`。profile 是 hoisted 安装，
+这份副本会被装成实体目录 `~/.dsh/profiles/<profile>/node_modules/@deepseek-ai/dsh-tools/`，比宿主的
+`@deepseek-ai/dsh-base` 里的 `- id: tools` 更「近」，于是 `tools` 服务从它加载；它自己又缺
+`@deepseek-ai/cordis`（profile: `autoInstallPeers: false`），导入失败 → `tools` 不注册 → 依赖它的
+8 个插件全 pending → 启动中止。修复：这两个包改走 `peerDependencies`（跟随宿主版本），
+`dependencies` 留空。已经装上旧版的机器，二选一恢复：
+
+```bash
+# 方案一：删掉被顶掉的那份副本（不动你的会话与配置）
+rm -rf ~/.dsh/profiles/<profile>/node_modules/@deepseek-ai/dsh-tools
+# 方案二：用崩溃弹窗第三个按钮「Disable third-party plugins, back up profile patch, and restart」
+```
+
+然后重装（`dsh plugin add github:coding-today/dsh-commander`）并重启。`test/package.test.mjs`
+会拦住任何把 `@deepseek-ai/*` 写回 `dependencies` 的改动。
+
 ## 兼容性
 
 | 项 | 版本 |
 | --- | --- |
-| DeepSeek Harness | 已在 **0.2.1-rc.2** 实测；`engines.dsh` 要求 `>=0.2.1-rc.2` |
+| DeepSeek Harness | 已在 **0.2.1-rc.2 / 0.2.1-rc.3** 实测；`engines.dsh` 要求 `>=0.2.1-rc.2` |
 | Node.js | `>=22.19.0`（CI 用 22.22.3） |
-| 平台 | 只在 macOS 实测；Linux 预期可用，Windows 未验证 |
+| 平台 | macOS 实测；Linux 预期可用；Windows 有现场报告（issue #1，rc.3），修复后待复验 |
 
 > `engines.dsh` 没有上界：能过闸不等于已测试。宿主大版本升级后请重跑 `node scripts/check.mjs`，
 > 再用 `DSH_COMMANDER_TRACE=1` 做一次真机挂载确认。
+>
+> **宿主提供的 `@deepseek-ai/*` 包一律走 `peerDependencies`**：profile 用 hoisted 安装，写进
+> `dependencies` 就会装出实体副本顶掉宿主，正是 FAQ 第 10 条的启动失败。
 
 ## 仓库结构
 

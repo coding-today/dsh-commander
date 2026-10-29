@@ -36,6 +36,20 @@
 ### Changed
 
 - `commander_scoreboard` 的 `task` 不再全局必填：只有 `init` / `adjust` / `show` 需要，缺失时报明确中文错误。
+- **宿主提供的 `@deepseek-ai/*` 包改走 `peerDependencies`**（`@deepseek-ai/dsh-tools`、`@deepseek-ai/schemastery`，
+  外加三个 `dsh.client.inject` 客户端包标记 `optional`），`dependencies` 清空。修复 issue #1：
+  profile 是 hoisted 安装，硬锁在 `dependencies` 里的 `@deepseek-ai/dsh-tools@0.2.1-rc.2` 会被装成实体副本，
+  顶掉宿主的 `tools` 服务（副本自身缺 `@deepseek-ai/cordis`，`autoInstallPeers: false` 下不会被补），
+  导致启动报 `dsh: startup failed: 1 required plugin did not activate`、所有面板空白。
+  本地实测：修复前 profile 里会多出 `cosmokit / dsh-brand / dsh-tools / dsh-util-values / schemastery`
+  五个实体目录，修复后一个都没有。
+
+### Fixed
+
+- 新增 `test/package.test.mjs` 守卫：`dependencies` / `optionalDependencies` 里不许出现 `@deepseek-ai/*`、
+  `lib/` 里 import 的宿主包必须在 `peerDependencies`、`dsh.client.inject` 的条目也要声明 peer、
+  peer 范围必须跟随宿主（不许精确锁版本）、`engines` 保持范围式。
+- README 新增 FAQ 第 10 条：启动失败的成因与两种恢复办法（删副本 / 用崩溃弹窗第三个按钮）。
 
 首个可运行版本已就绪，尚未发布到 npm。发布前需要处理的事项见
 [RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址、依赖双份取舍）。
