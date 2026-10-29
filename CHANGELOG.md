@@ -56,6 +56,9 @@
   `lib/` 里 import 的宿主包必须在 `peerDependencies`、`dsh.client.inject` 的条目也要声明 peer、
   peer 范围必须跟随宿主（不许精确锁版本）、`engines` 保持范围式。
 - README 新增 FAQ 第 10 条：启动失败的成因与两种恢复办法（删副本 / 用崩溃弹窗第三个按钮）。
+- 用户可见的磁盘路径统一按 posix 输出：Windows 上文件服务把 `displayPath` 解析成 `.agent\plans\x.md`，
+  于是记分牌/台账/交接单的回执在 Windows 上换了形状（`test/plugin.test.mjs` 因此在 Windows CI 红）。
+  新增 `posixDisplay()`，回执全部经它输出；补一条用字面反斜杠输入的跨平台单测，POSIX 上也守得住。
 
 首个可运行版本已就绪，尚未发布到 npm。发布前需要处理的事项见
 [RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)（包名占用、仓库地址）。

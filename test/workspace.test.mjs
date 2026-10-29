@@ -1,13 +1,24 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { assertSafeRelative, fileSystemOf, listPlansFiles } from '../lib/workspace.js';
+import { assertSafeRelative, fileSystemOf, listPlansFiles, posixDisplay } from '../lib/workspace.js';
 
 test('accepts workspace-relative paths and normalizes separators', () => {
 	assert.equal(assertSafeRelative('.agent/plans', 'plansDir'), '.agent/plans');
 	assert.equal(assertSafeRelative('a\\b/c', 'plansDir'), 'a/b/c');
 	assert.equal(assertSafeRelative('./.agent//plans/', 'plansDir'), '.agent/plans');
 	assert.equal(assertSafeRelative(' ledger.md ', 'ledgerFile', { allowSegments: false }), 'ledger.md');
+});
+
+test('display paths render with posix separators on every host', () => {
+	// The harness resolves displayPath with the platform separator; Windows reports
+	// `.agent\\plans\\x.md`. Users, docs and log lines are all posix, so a report must
+	// not change shape with the host OS. Backslash input is the Windows shape, and the
+	// assertion has to hold on macOS/Linux CI too — hence a literal, not path.join.
+	assert.equal(posixDisplay('.agent\\plans\\ledger.md'), '.agent/plans/ledger.md');
+	assert.equal(posixDisplay('C:\\ws\\.agent\\plans\\x.md'), 'C:/ws/.agent/plans/x.md');
+	assert.equal(posixDisplay('.agent/plans/ledger.md'), '.agent/plans/ledger.md');
+	assert.equal(posixDisplay(undefined), '');
 });
 
 test('rejects anything that could escape the workspace', () => {
