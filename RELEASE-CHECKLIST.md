@@ -17,7 +17,7 @@
 | 与宿主无关的激活失败 | `did not activate` 仅 2 条：`web-ui-task-board`（ledger 被另一进程占用）、`experimental-inspector`（fetch accessor），与本插件无关 |
 | profile 侧可解析 | `cd ~/.dsh/profiles/web && node -e "import('dsh-commander')"` → 导出 `Config/apply/inject/name` |
 | 打包内容 | `npm pack --dry-run` → **32 files / 502.1 kB packed / 710.0 kB unpacked**（含 README 截图） |
-| 依赖可从公网安装 | `@deepseek-ai/dsh-tools@0.2.1-rc.2` 与 `@deepseek-ai/schemastery@3.18.5` 在 npmjs 与 npmmirror 均可解析（CI 不会因私有包失败） |
+| 依赖可从公网安装 | `devDependencies` 里的 `@deepseek-ai/dsh-tools@0.2.1-rc.2` 与 `@deepseek-ai/schemastery@3.18.5` 在 npmjs 与 npmmirror 均可解析（CI 不会因私有包失败）；运行时这两个包由宿主提供（`peerDependencies`） |
 | Git 历史 | `main` 分支，`git log --oneline` 见提交清单；工作树干净 |
 
 ## 二、开源工程规范（本轮补齐）
@@ -45,9 +45,14 @@
 2. **仓库地址是占位**：`package.json` 的 `repository` / `homepage` / `bugs` 与 README 的 CI 徽章都指向
    `https://github.com/coding-today/dsh-commander`。建仓库后如果用户名不同，**四处一起替换**，否则徽章 404、npm 的 `repository` 也会指错。
 
-3. **依赖双份（结构性取舍）**：宿主的 peer 在 profile 内解析不到，插件只能把 `@deepseek-ai/dsh-tools` 放进 `dependencies` 并精确钉 `0.2.1-rc.2`。
-   - 后果：宿主与插件各持一份 `defineTool`，若上游加严 `instanceof` 检查会分裂。
-   - 现状：公网可安装（已验），所以不阻断发布；但 README 兼容性段必须保留这条，且 DSH 升到 0.2.2+ 时要跟版本。
+3. ~~**依赖双份（结构性取舍）**~~ → **已推翻（issue #1）**：宿主包必须走 `peerDependencies`，绝不能写进 `dependencies`。
+   - 原来的假设「宿主的 peer 在 profile 内解析不到」是错的：插件解析宿主包走的是
+     `~/.dsh/profiles/node_modules/@deepseek-ai/*` 这组软链（指向应用自带的包），实测可解析。
+   - 写进 `dependencies` 的后果不是「各持一份」而是**启动失败**：profile 是 hoisted 安装，
+     `@deepseek-ai/dsh-tools` 会被装成实体副本并顶掉宿主的 `tools` 服务，副本缺
+     `@deepseek-ai/cordis`（`autoInstallPeers: false` 不补）→ 导入失败 → `1 required plugin did not activate`。
+   - 现在由 `test/package.test.mjs` 守着；发布前确认 `dependencies` 为空、两个宿主包在 `peerDependencies`。
+   - 仍需跟版本的是 `engines.dsh`：宿主升到 0.2.2+ 时同步调下限。
 
 ## 四、发布步骤
 
