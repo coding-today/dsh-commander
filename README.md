@@ -304,4 +304,4 @@ pnpm run screenshots # 改完 docs/screenshots/src/*.txt 后重渲染截图
 
 ## 许可证
 
-[MIT](./LICENSE) © 2026 Yuxiang Lin
+[MIT](./LICENSE) © 2026 二锅头不上头

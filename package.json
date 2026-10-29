@@ -73,7 +73,7 @@
     "orchestration"
   ],
   "license": "MIT",
-  "author": "Yuxiang Lin",
+  "author": "二锅头不上头",
   "publishConfig": {
     "access": "public",
     "tag": "next"

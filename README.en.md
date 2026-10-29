@@ -313,4 +313,4 @@ Security reports: [SECURITY.md](./SECURITY.md).
 
 ## License
 
-[MIT](./LICENSE) © 2026 Yuxiang Lin
+[MIT](./LICENSE) © 2026 二锅头不上头
